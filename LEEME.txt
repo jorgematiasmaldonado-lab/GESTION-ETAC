@@ -15,6 +15,18 @@ PRIMEROS PASOS
 - Licencia anual > Importar archivo: elegí "Licencias_26-27_Guardia_A.csv" (incluido) o el PDF del cronograma.
 - Configuración > "Borrar datos de ejemplo" cuando termines de probar.
 
+NOVEDADES DE LA VERSIÓN 2
+- Tema claro y oscuro: botón arriba a la derecha (se recuerda la elección).
+- En todos los módulos: filtro por guardia y búsqueda de personal escribiendo el nombre.
+  El filtro se mantiene al pasar de un módulo a otro ("Quitar filtros" para limpiarlo).
+- Listas contraíbles: tocá el título de cada guardia/lista para contraer o expandir,
+  o usá "Contraer todo" / "Expandir todo".
+- Informes con gráficos (menú Informes o botón "Informe" en cada módulo):
+  general de la base, asistencia, horas extras, francos, licencias, capacitaciones,
+  carpetas médicas, novedades y dotación. Por base completa, por guardia o por persona.
+  Se ve la vista previa en pantalla; "Generar PDF" abre la impresión: elegí
+  "Guardar como PDF".
+
 COPIAS DE SEGURIDAD
 - Configuración > "Exportar copia de seguridad" descarga un archivo .json con todo.
 - Guardalo en un pendrive o en Drive al menos una vez por semana.
