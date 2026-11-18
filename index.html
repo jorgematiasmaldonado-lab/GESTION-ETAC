@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<!--
+  ============================================================
+  Sistema de Gestión de Personal – ETAC
+  (Equipo Técnico de Acción ante Catástrofes)
+  Versión 1.0 – Noviembre 2026
+
+  Autor: Maldonado Jorge Matias – JMM Gestiones y Tecnologías
+  Contacto: WhatsApp 3541 633175 · jorgematiasmaldonado@gmail.com
+
+  Aplicación de un solo archivo. Funciona sin internet y guarda
+  los datos en el navegador (IndexedDB). Solo la importación de
+  Excel (.xlsx) y PDF necesita conexión para cargar las librerías.
+  ============================================================
+-->
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Gestión de Personal – ETAC</title>
+<style>
+/* ===================== ESTILOS =====================
+   Hojas de estilo propias (sin CDN) para que la app se vea
+   bien aunque no haya internet. */
+:root{
+  --rojo:#E3191B; --rojo-osc:#b51214; --negro:#0d0d0d; --gris:#f3f4f6; --borde:#d1d5db;
+  --texto:#111827; --sub:#4b5563; --navy:#0B1426; --celeste:#22D3EE;
+  --verde:#15803d; --verde-bg:#dcfce7; --amar:#a16207; --amar-bg:#fef9c3; --rojo-bg:#fee2e2;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font-size:17px;color:var(--texto);background:var(--gris);padding-bottom:64px}
+a{color:inherit}
+header.top{background:var(--negro);color:#fff;display:flex;align-items:center;gap:14px;padding:8px 16px;position:sticky;top:0;z-index:30}
+header.top img{height:44px;width:auto;max-width:200px;object-fit:contain}
+header.top .tit{font-weight:700;font-size:19px;line-height:1.1}
+header.top .tit small{display:block;font-weight:400;font-size:13px;color:#d1d5db}
+.logo-txt{font-weight:900;letter-spacing:2px;font-size:24px;color:#fff;border:2px solid var(--rojo);padding:2px 8px;border-radius:6px}
+nav.menu{background:#1f1f1f;display:flex;overflow-x:auto;position:sticky;top:62px;z-index:29}
+nav.menu button{background:none;border:0;color:#e5e7eb;padding:12px 14px;font-size:15px;white-space:nowrap;cursor:pointer;border-bottom:3px solid transparent}
+nav.menu button.act{color:#fff;border-bottom-color:var(--rojo);font-weight:700}
+nav.menu button:hover{background:#2d2d2d}
+main{max-width:1400px;margin:0 auto;padding:16px}
+h1{font-size:24px;margin:4px 0 14px}
+h2{font-size:20px;margin:18px 0 10px}
+h3{font-size:17px;margin:12px 0 8px}
+.card{background:#fff;border:1px solid var(--borde);border-radius:10px;padding:14px;margin-bottom:14px}
+.grid{display:grid;gap:12px}
+.g2{grid-template-columns:repeat(auto-fit,minmax(280px,1fr))}
+.g3{grid-template-columns:repeat(auto-fit,minmax(230px,1fr))}
+.g4{grid-template-columns:repeat(auto-fit,minmax(190px,1fr))}
+.stat{background:#fff;border:1px solid var(--borde);border-left:6px solid var(--negro);border-radius:10px;padding:12px}
+.stat .n{font-size:30px;font-weight:800}
+.stat .l{color:var(--sub);font-size:14px}
+.stat.r{border-left-color:var(--rojo)} .stat.v{border-left-color:var(--verde)} .stat.a{border-left-color:#ca8a04} .stat.c{border-left-color:#0891b2}
+.stat ul{margin:6px 0 0;padding-left:18px;font-size:14px;max-height:160px;overflow:auto}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end}
+.row>*{flex:0 0 auto}
+label{display:block;font-size:14px;color:var(--sub);margin-bottom:3px;font-weight:600}
+input,select,textarea{font:inherit;font-size:16px;padding:8px 10px;border:1px solid #9ca3af;border-radius:7px;background:#fff;color:var(--texto);max-width:100%}
+textarea{width:100%;min-height:80px}
+input:focus,select:focus,textarea:focus,button:focus-visible{outline:3px solid #fca5a5;outline-offset:1px}
+.f{margin-bottom:10px}
+.f input,.f select,.f textarea{width:100%}
+.btn{font:inherit;font-size:15px;padding:9px 14px;border-radius:7px;border:1px solid #6b7280;background:#fff;color:var(--texto);cursor:pointer;font-weight:600;white-space:nowrap}
+.btn:hover{background:#f3f4f6}
+.btn.p{background:var(--rojo);border-color:var(--rojo);color:#fff}
+.btn.p:hover{background:var(--rojo-osc)}
+.btn.d{background:var(--negro);border-color:var(--negro);color:#fff}
+.btn.s{padding:5px 9px;font-size:13px}
+.btn.lnk{border:0;background:none;color:#1d4ed8;text-decoration:underline;padding:2px 4px}
+.tbl-wrap{overflow:auto;background:#fff;border:1px solid var(--borde);border-radius:10px}
+table.tbl{border-collapse:collapse;width:100%;font-size:15px}
+.tbl th,.tbl td{border-bottom:1px solid #e5e7eb;padding:7px 9px;text-align:left;vertical-align:top}
+.tbl th{background:#111;color:#fff;position:sticky;top:0;font-size:14px;cursor:default}
+.tbl th.sort{cursor:pointer}
+.tbl tr:hover td{background:#fafafa}
+.tbl td.num,.tbl th.num{text-align:right}
+.tbl tr.anul td{color:#9ca3af;text-decoration:line-through}
+.tag{display:inline-block;padding:2px 8px;border-radius:999px;font-size:13px;font-weight:700;background:#e5e7eb}
+.tag.v{background:var(--verde-bg);color:var(--verde)} .tag.a{background:var(--amar-bg);color:var(--amar)} .tag.r{background:var(--rojo-bg);color:var(--rojo-osc)} .tag.n{background:#111;color:#fff}
+.bar{height:14px;background:#e5e7eb;border-radius:999px;overflow:hidden;min-width:120px}
+.bar>div{height:100%;background:var(--rojo)}
+.bar.ok>div{background:var(--verde)}
+.muted{color:var(--sub);font-size:14px}
+.warn{background:var(--amar-bg);border:1px solid #facc15;color:#713f12;padding:10px 12px;border-radius:8px;margin-bottom:12px}
+.err{background:var(--rojo-bg);border:1px solid #fca5a5;color:#7f1d1d;padding:10px 12px;border-radius:8px;margin-bottom:12px}
+.okbox{background:var(--verde-bg);border:1px solid #86efac;color:#14532d;padding:10px 12px;border-radius:8px;margin-bottom:12px}
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px}
+.tabs button{border:1px solid #6b7280;background:#fff;padding:8px 14px;border-radius:999px;font:inherit;font-size:15px;cursor:pointer}
+.tabs button.act{background:var(--negro);color:#fff;border-color:var(--negro)}
+/* Planilla de asistencia */
+table.plan{border-collapse:collapse;background:#fff;font-size:15px}
+.plan th,.plan td{border:1px solid #9ca3af;padding:0;text-align:center}
+.plan th{background:#111;color:#fff;padding:6px 6px;font-size:13px;position:sticky;top:0;z-index:2}
+.plan td.nom{text-align:left;padding:4px 8px;white-space:nowrap;font-weight:600;position:sticky;left:0;background:#fff;z-index:1}
+.plan td.nro{padding:4px 6px;color:var(--sub);font-size:13px}
+.plan td.tot{padding:4px 6px;font-size:12px;white-space:nowrap;text-align:left;color:var(--sub)}
+.plan tfoot td{padding:5px;font-weight:700;background:#f9fafb}
+.plan tfoot td.bajo{background:var(--rojo-bg);color:var(--rojo-osc)}
+.cel{width:62px;height:40px;border:0;background:transparent;font:inherit;font-weight:800;font-size:15px;cursor:pointer;position:relative}
+.cel:focus{outline:3px solid #2563eb;outline-offset:-3px}
+.cel.auto{font-style:italic;opacity:.85}
+.cel.sug{opacity:.45;font-style:italic}
+.cel.nc{color:#9ca3af;cursor:not-allowed;background:#f3f4f6}
+.cel .dot{position:absolute;top:2px;right:3px;width:7px;height:7px;border-radius:50%;background:#2563eb}
+.leyenda span{display:inline-block;margin:0 10px 6px 0;font-size:14px}
+.leyenda b{display:inline-block;padding:2px 7px;border-radius:5px;margin-right:4px}
+/* Calendario licencias */
+table.cal{border-collapse:collapse;font-size:12px;background:#fff}
+.cal th,.cal td{border:1px solid #e5e7eb;width:24px;height:24px;text-align:center;padding:0}
+.cal th{background:#111;color:#fff}
+.cal td.nom{width:auto;text-align:left;padding:2px 6px;white-space:nowrap;font-size:13px;font-weight:600}
+.cal td.lic{background:var(--rojo);color:#fff}
+.cal td.fs{background:#f3f4f6}
+.cal tfoot td.exc{background:#fde047;font-weight:800}
+/* Modal y avisos */
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:flex-start;justify-content:center;z-index:100;padding:30px 10px;overflow:auto}
+.modal{background:#fff;border-radius:12px;width:100%;max-width:720px;padding:18px;box-shadow:0 10px 40px rgba(0,0,0,.4)}
+.modal.xl{max-width:1250px}
+.modal h2{margin-top:0}
+.modal .acc{display:flex;gap:8px;justify-content:flex-end;margin-top:14px;flex-wrap:wrap}
+#toasts{position:fixed;right:14px;bottom:80px;z-index:200;display:flex;flex-direction:column;gap:8px;max-width:380px}
+.toast{background:#111;color:#fff;padding:12px 14px;border-radius:9px;box-shadow:0 4px 18px rgba(0,0,0,.3);font-size:15px}
+.toast.e{background:var(--rojo-osc)} .toast.ok{background:var(--verde)}
+.toast .btn{margin-top:8px}
+.banner{background:#fef3c7;border-bottom:2px solid #f59e0b;padding:8px 16px;display:flex;gap:12px;align-items:center;flex-wrap:wrap;font-size:15px}
+/* Pie JMM */
+footer.jmm{position:fixed;bottom:0;left:0;right:0;background:var(--navy);color:#cbd5e1;display:flex;align-items:center;justify-content:center;gap:10px;padding:7px 12px;font-size:13px;z-index:40;flex-wrap:wrap;text-align:center}
+footer.jmm img{height:24px;width:auto}
+footer.jmm a{color:var(--celeste);text-decoration:none;font-weight:600}
+footer.jmm .lj{font-weight:900;color:#fff}
+footer.jmm .lj i{color:var(--celeste);font-style:normal}
+.print-only{display:none}
+.codes button{min-width:74px;margin:3px}
+.dz{border:3px dashed #9ca3af;border-radius:12px;padding:30px;text-align:center;background:#fff;cursor:pointer}
+.dz.on{border-color:var(--rojo);background:#fff1f2}
+.acerca{text-align:center}
+.acerca img{max-width:260px;max-height:170px;margin:10px;border-radius:10px}
+@media (max-width:700px){
+  body{font-size:16px}
+  header.top .tit small{display:none}
+  nav.menu{top:62px}
+  main{padding:10px}
+  footer.jmm{font-size:11px;gap:6px}
+  footer.jmm .opt{display:none}
+}
+/* Impresión: solo el contenido, con encabezado ETAC y pie JMM */
+@media print{
+  @page{size:A4;margin:12mm}
+  body{background:#fff;padding:0;font-size:12px}
+  header.top,nav.menu,footer.jmm,.noprint,#toasts,.banner,.btn,.tabs{display:none!important}
+  .print-only{display:block}
+  main{max-width:none;padding:0}
+  .card,.tbl-wrap{border:0;padding:0;box-shadow:none}
+  .tbl th,.plan th,.cal th{background:#ddd!important;color:#000!important;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .tbl th,.tbl td{padding:3px 5px;font-size:11px}
+  .cel{width:40px;height:22px;font-size:11px}
+  .plan td.nom{position:static}
+  .cal td.lic{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  .ph{display:flex!important;align-items:center;gap:12px;border-bottom:2px solid #000;padding-bottom:6px;margin-bottom:10px}
+  .ph img{height:44px}
+  .pf{display:block!important;margin-top:16px;border-top:1px solid #999;padding-top:4px;font-size:10px;color:#444;text-align:center}
+  .modal-bg{position:static;background:none;padding:0}
+  .modal{box-shadow:none;max-width:none;padding:0}
+  body.modal-print main{display:none}
+  body.modal-print .modal .acc{display:none}
+}
+.ph,.pf{display:none}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <img src="logo-etac.jpg" alt="ETAC" id="logoEtac" onerror="logoFallback(this,'ETAC')">
+  <div class="tit">Gestión de Personal<small id="nombreInst">ETAC – Equipo Técnico de Acción ante Catástrofes</small></div>
+</header>
+<nav class="menu" id="menu"></nav>
+<div id="banner"></div>
+<main id="main"></main>
+
+<footer class="jmm">
+  <img src="logo-jmm.png" alt="JMM" onerror="logoFallback(this,'JMM')">
+  <span>Desarrollado por <b style="color:#fff">JMM Gestiones y Tecnologías</b> · Jorge Maldonado</span>
+  <span class="opt">· <a href="https://wa.me/543541633175" target="_blank" rel="noopener">WhatsApp 3541 633175</a></span>
+  <span class="opt">· <a href="mailto:jorgematiasmaldonado@gmail.com">jorgematiasmaldonado@gmail.com</a></span>
+</footer>
+<div id="toasts"></div>
+<div id="modalRoot"></div>
+
+<script>
+'use strict';
+/* =====================================================
+   1. UTILIDADES GENERALES
+   ===================================================== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const h = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+const MS = 86400000;
+const MESES = ['Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const MES_C = ['ENE','FEB','MAR','ABR','MAY','JUN','JUL','AGO','SEP','OCT','NOV','DIC'];
+const DIAS_C = ['D','L','M','M','J','V','S'];
+const GUARDIAS = ['A','B','C'];
+
+function logoFallback(img, txt){ const s=document.createElement('span'); s.className='logo-txt'; s.textContent=txt; img.replaceWith(s); }
+
+// Las fechas se guardan como texto 'AAAA-MM-DD' y se calculan en UTC para evitar problemas de horario.
+const D = s => new Date(s + 'T00:00:00Z');
+const iso = d => d.toISOString().slice(0, 10);
+const addD = (s, n) => iso(new Date(D(s).getTime() + n * MS));
+const diffD = (a, b) => Math.round((D(b) - D(a)) / MS); // días de a hasta b
+const hoy = () => { const t = new Date(); return `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`; };
+const fmt = s => s ? s.slice(8,10) + '/' + s.slice(5,7) + '/' + s.slice(0,4) : '';
+const mod = (a, n) => ((a % n) + n) % n;
+function parseFecha(t){ // acepta dd/mm/aaaa, dd-mm-aa, aaaa-mm-dd y números de Excel
+  if (t == null || t === '') return null;
+  if (typeof t === 'number' && t > 20000 && t < 80000) return iso(new Date(Date.UTC(1899,11,30) + t*MS));
+  t = String(t).trim();
+  let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/);
+  if (m) return valid(+m[1], +m[2], +m[3]);
+  m = t.match(/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.](\d{2,4})$/);
+  if (m){ let y=+m[3]; if (y<100) y+=2000; return valid(y, +m[2], +m[1]); }
+  return null;
+  function valid(y,mo,d){ const s=`${y}-${String(mo).padStart(2,'0')}-${String(d).padStart(2,'0')}`; const x=new Date(s+'T00:00:00Z'); return (!isNaN(x) && iso(x)===s) ? s : null; }
+}
+const minHM = m => { m = Math.round(m||0); const s = m<0?'-':''; m=Math.abs(m); return `${s}${Math.floor(m/60)} h ${m%60} min`; };
+const hmToMin = t => { const [a,b] = String(t||'').split(':').map(Number); return isNaN(a)?null:a*60+(b||0); };
+const norm = s => String(s||'').normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase().replace(/[^a-zñ0-9 ]/g,' ').replace(/\s+/g,' ').trim();
+const mayus = s => String(s||'').trim().replace(/\s+/g,' ').toUpperCase();
+function inRange(f, a, b){ return f >= a && f <= b; }
+
+/* =====================================================
+   2. ALMACENAMIENTO (IndexedDB con respaldo en localStorage)
+   ===================================================== */
+const Store = {
+  db: null,
+  async open(){
+    try{
+      this.db = await new Promise((res, rej) => {
+        const r = indexedDB.open('etac_gestion_personal', 1);
+        r.onupgradeneeded = () => r.result.createObjectStore('kv');
+        r.onsuccess = () => res(r.result);
+        r.onerror = () => rej(r.error);
+      });
+    }catch(e){ this.db = null; }
+  },
+  async get(k){
+    if (!this.db){ const v = localStorage.getItem('etac_'+k); return v ? JSON.parse(v) : null; }
+    return new Promise((res, rej) => { const r = this.db.transaction('kv').objectStore('kv').get(k); r.onsuccess=()=>res(r.result||null); r.onerror=()=>rej(r.error); });
+  },
+  async set(k, v){
+    if (!this.db){ localStorage.setItem('etac_'+k, JSON.stringify(v)); return; }
+    return new Promise((res, rej) => { const t = this.db.transaction('kv','readwrite'); t.objectStore('kv').put(v, k); t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); });
+  }
+};
+let DB = null;
+let saveTimer = null;
+function save(){ clearTimeout(saveTimer); saveTimer = setTimeout(() => Store.set('data', JSON.parse(JSON.stringify(DB))).catch(e => toast('Error al guardar: '+e.message,'e')), 150); }
+
+/* =====================================================
+   3. DATOS INICIALES
+   Personal tomado de las planillas reales (Guardia A del
+   cronograma de licencias, Guardias B y C de las planillas de
+   asistencia). Los registros marcados "ejemplo" se borran con
+   el botón "Borrar datos de ejemplo".
+   ===================================================== */
+const FERIADOS_INICIALES = [
+  // 2026
+  '2026-01-01','2026-02-16','2026-02-17','2026-03-23','2026-03-24','2026-04-02','2026-04-03','2026-05-01','2026-05-25',
+  '2026-06-15','2026-06-20','2026-07-09','2026-07-10','2026-08-17','2026-10-12','2026-11-23','2026-12-08','2026-12-24','2026-12-25','2026-12-31',
+  // 2027 (los mismos que usa el cronograma de licencias 26-27)
+  '2027-01-01','2027-02-08','2027-02-09','2027-03-24','2027-03-26','2027-04-02','2027-05-25','2027-07-09','2027-12-08','2027-12-24','2027-12-25','2027-12-31'
+];
+const CODIGOS_INICIALES = [
+  {sigla:'P', nombre:'Presente', color:'#dcfce7', texto:'#166534', tecla:'p'},
+  {sigla:'FC', nombre:'Franco compensatorio', color:'#dbeafe', texto:'#1e40af', tecla:'f'},
+  {sigla:'CM', nombre:'Carpeta médica', color:'#fee2e2', texto:'#991b1b', tecla:'c'},
+  {sigla:'LA', nombre:'Licencia anual', color:'#ede9fe', texto:'#5b21b6', tecla:'l'},
+  {sigla:'ART', nombre:'Accidente de trabajo (ART)', color:'#ffedd5', texto:'#9a3412', tecla:'a'},
+  {sigla:'CG', nombre:'Cambio de guardia', color:'#fef9c3', texto:'#854d0e', tecla:'g'},
+  {sigla:'PASIVA', nombre:'Guardia pasiva', color:'#e0f2fe', texto:'#075985', tecla:'s'},
+  {sigla:'CAP', nombre:'Capacitación / taller', color:'#ccfbf1', texto:'#115e59', tecla:'t'},
+  {sigla:'—', nombre:'No corresponde', color:'#f3f4f6', texto:'#6b7280', tecla:'-'}
+];
+const PERSONAL_INICIAL = {
+  A: ['AGUIRRE JUAN PABLO','BARREIRO DAVID','BENDAYAN MICHELLE','CHAVARRIA GASPAR','COLAZO JUAN','CORDOBA GINES','DE ZOTTI MICAELA','LOPEZ MARIA EMILIA','MALDONADO ABIGAIL','MALDONADO JORGE','MOLINA IGNACIO','OLDRINI CAMILA','PAEZ MAYRA','PEREZ DIEGO','RECAMAN AGUSTIN','REYNOSO MARTIN','RIVERO GASTON','SENNO GUSTAVO','SILES DIEGO','VALDEZ SANTIAGO'],
+  B: ['ABRATTE CRISTIAN','BATISTUTTA GABRIEL','BRANDAN FLOR','BRITOS VICENTE','CARRION ABIGAIL','GUDIÑO HUGO','HEREDIA CLAUDIO','ITURRES GABRIEL','MELIAN TOMAS','MERLOS LAURA','MINICUCCI CELESTE','OCHOA CHRISTIAN','ORDOÑEZ ARIEL','ORUE FRANCISCO','PEREYRA IGNACIO','PEREYRA JEREMÍAS','RAME GABRIEL','REYNA YAZMIN','RAMIREZ RODRIGO','SANCHEZ JULIAN','FERNANDEZ MATEO'],
+  C: ['ACHAVAL FEDERICO','ALTURRIA MELISA','AMEZAGUE LUCIANA','CRUZ EZEQUIEL','DESTEFANI MAURICIO','DUTRA FERNANDO','GABELLINI JOAQUIN','GALFIONE TOMAS','LOPEZ MICAELA','LÓPEZ NATHALIE','MALDONADO JUAN','NOSEDA SERGIO','PERALTA MILAGROS','PETRUZZI LUCAS','PIZZOLATO GENARO','PRAT CELESTE','REYES DAFNE','REYES IVO','SASTRE JOEL','TABOADA VALERIA','CISTERNA ANTONELA','LOPEZ LEANDRO']
+};
+function datosIniciales(){
+  const db = {
+    version: 1,
+    personal: [], asistencia: {}, horas: [], francos: [], licencias: [], capacitaciones: [],
+    carpetas: [], cambios: [], novedades: [], importaciones: [],
+    config: {
+      institucion: 'ETAC - Equipo Técnico de Acción ante Catástrofes',
+      rotacion: { A: '2026-11-02', B: '2026-11-03', C: '2026-11-04' },
+      codigos: CODIGOS_INICIALES.map(c => ({...c})),
+      feriados: [...FERIADOS_INICIALES],
+      minPresentes: 12, maxLicencia: 3, ultimoBackup: null
+    }
+  };
+  for (const g of GUARDIAS) PERSONAL_INICIAL[g].forEach(n => db.personal.push(nuevaPersona({nombre:n, guardia:g})));
+  // --- Datos de ejemplo (borrables) ---
+  const p = n => db.personal.find(x => x.nombre === n).id;
+  const t = hoy();
+  const ej = [
+    [p('BATISTUTTA GABRIEL'), addD(t,-20), 'retiro', '08:00', '14:30', 'Traslado de paciente'],
+    [p('BATISTUTTA GABRIEL'), addD(t,-14), 'ingreso', '02:00', '08:00', 'Refuerzo operativo'],
+    [p('BATISTUTTA GABRIEL'), addD(t,-8), 'retiro', '08:00', '20:00', 'Incendio forestal'],
+    [p('ORUE FRANCISCO'), addD(t,-12), 'retiro', '08:00', '16:00', 'Rescate'],
+    [p('ORUE FRANCISCO'), addD(t,-5), 'retiro', '08:00', '20:00', 'Operativo especial'],
+    [p('ACHAVAL FEDERICO'), addD(t,-9), 'ingreso', '20:00', '08:00', 'Cobertura de guardia'],
+    [p('COLAZO JUAN'), addD(t,-3), 'retiro', '08:00', '11:15', 'Novedad de móvil']
+  ];
+  ej.forEach(([pid,f,tipo,de,ha,mot]) => db.horas.push({id:uid(), personaId:pid, fecha:f, tipo, desde:de, hasta:ha, min:calcMin(de,ha), motivo:mot, autorizo:'Jefe de guardia', nroForm:'', anulado:false, ejemplo:true}));
+  db.capacitaciones.push({id:uid(), tema:'RCP y primeros auxilios', fecha:addD(t,10), horas:4, instructor:'Cruz Roja', lugar:'Base ETAC', modalidad:'Presencial', certificado:true, obligatoria:true, asistentes:{}, ejemplo:true});
+  db.carpetas.push({id:uid(), personaId:p('PRAT CELESTE'), inicio:addD(t,-2), dias:5, tipo:'Enfermedad', nroCert:'1234', presento:false, obs:'', ejemplo:true});
+  db.novedades.push({id:uid(), fecha:t, guardia:'B', personaId:'', texto:'Ejemplo de novedad: se recibió el móvil 3 del taller.', ejemplo:true});
+  return db;
+}
+function nuevaPersona(o){
+  return { id: uid(), nombre: mayus(o.nombre), dni: o.dni||'', guardia: o.guardia||'A', cargo: o.cargo||'', tel: o.tel||'',
+    ingreso: o.ingreso||'', activo: o.activo!==false, obs: o.obs||'', saldoInicialMin: o.saldoInicialMin||0,
+    historialGuardia: [{guardia: o.guardia||'A', desde: '2000-01-01'}] };
+}
+const calcMin = (de, ha) => { const a = hmToMin(de), b = hmToMin(ha); if (a==null||b==null) return 0; let m = b - a; if (m <= 0) m += 1440; return m; };
+
+/* =====================================================
+   4. CÁLCULOS
+   ===================================================== */
+const persona = id => DB.personal.find(p => p.id === id);
+const nombreP = id => persona(id)?.nombre || '(persona eliminada)';
+const activos = () => DB.personal.filter(p => p.activo).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+const feriadoSet = () => new Set(DB.config.feriados);
+const codigo = s => DB.config.codigos.find(c => c.sigla === s);
+
+function guardiaEn(p, f){ // guardia de la persona en una fecha
+  const hs = [...(p.historialGuardia||[])].sort((a,b)=>a.desde.localeCompare(b.desde));
+  let g = hs.length ? hs[0].guardia : p.guardia;
+  for (const x of hs) if (x.desde <= f) g = x.guardia;
+  return g;
+}
+function fechasGuardia(g, y, m){ // fechas de la guardia g en el mes m (0-11) del año y
+  const ref = DB.config.rotacion[g]; if (!ref) return [];
+  const ini = `${y}-${String(m+1).padStart(2,'0')}-01`;
+  let f = addD(ini, mod(-diffD(ref, ini), 3)); const out = [];
+  while (f.slice(0,7) === ini.slice(0,7)){ out.push(f); f = addD(f,3); }
+  return out;
+}
+function guardiaDelDia(f){ for (const g of GUARDIAS){ const r = DB.config.rotacion[g]; if (r && mod(diffD(r,f),3)===0) return g; } return null; }
+
+function habiles(a, b, fer){ // días hábiles (lun-vie sin feriados) entre a y b inclusive
+  if (!a || !b || b < a) return 0; fer = fer || feriadoSet(); let n = 0;
+  for (let f = a; f <= b; f = addD(f,1)){ const d = D(f).getUTCDay(); if (d>0 && d<6 && !fer.has(f)) n++; }
+  return n;
+}
+function saldo(pid){
+  const p = persona(pid);
+  const min = (p?.saldoInicialMin||0) + DB.horas.filter(x => x.personaId===pid && !x.anulado).reduce((s,x)=>s+x.min,0);
+  const ganados = Math.floor(min/1440), tomados = DB.francos.filter(x=>x.personaId===pid).length;
+  return { min, ganados, tomados, disp: ganados - tomados, resto: 1440 - mod(min,1440), avance: mod(min,1440) };
+}
+function licDe(lic){ const fer = feriadoSet(); const usados = lic.franjas.reduce((s,f)=>s+habiles(f.desde,f.hasta,fer),0); return {usados, restantes:(+lic.disponibles||0)-usados}; }
+function licenciaEn(pid, f){ return DB.licencias.some(l => l.personaId===pid && l.franjas.some(x => inRange(f,x.desde,x.hasta))); }
+const finCarpeta = c => addD(c.inicio, Math.max(1,+c.dias||1)-1);
+function carpetaEn(pid, f){ return DB.carpetas.find(c => c.personaId===pid && inRange(f, c.inicio, finCarpeta(c))); }
+const kAs = (pid, f) => pid + '|' + f;
+function celda(pid, f){ // código efectivo de una casilla de asistencia
+  const r = DB.asistencia[kAs(pid,f)];
+  if (r && r.cod) return {...r};
+  if (licenciaEn(pid,f)) return {cod:'LA', auto:true};
+  if (carpetaEn(pid,f)) return {cod:'CM', sug:true};
+  return {cod:''};
+}
+function periodos(){ const s = new Set([...DB.licencias.map(l=>l.periodo), ...(DB.config.periodosExtra||[])]); const y = new Date().getFullYear(); s.add(`${y}-${y+1}`); s.add(`${y-1}-${y}`); return [...s].sort().reverse(); }
+
+/* =====================================================
+   5. INTERFAZ: MENÚ, AVISOS, MODALES
+   ===================================================== */
+const VISTAS = [
+  ['inicio','Inicio'],['personal','Personal'],['asistencia','Asistencia'],['horas','Horas extras'],['francos','Francos'],
+  ['licencias','Licencia anual'],['capacitaciones','Capacitaciones'],['carpetas','Carpetas médicas'],['reportes','Reportes'],
+  ['novedades','Novedades'],['config','Configuración'],['acerca','Acerca de']
+];
+let vista = 'inicio';
+const UI = { asis: null, horasOrden: 'disp', licTab: 'listado', licPeriodo: null, calMes: null, calG: 'A', capTab: 'lista', imp: null };
+
+function menu(){ $('#menu').innerHTML = VISTAS.map(([k,t]) => `<button class="${k===vista?'act':''}" onclick="ir('${k}')">${t}</button>`).join(''); }
+function ir(v){ vista = v; menu(); render(); window.scrollTo(0,0); }
+function render(){
+  $('#nombreInst').textContent = DB.config.institucion;
+  bannerBackup();
+  const fn = { inicio:vInicio, personal:vPersonal, asistencia:vAsistencia, horas:vHoras, francos:vFrancos, licencias:vLicencias,
+    capacitaciones:vCapacitaciones, carpetas:vCarpetas, reportes:vReportes, novedades:vNovedades, config:vConfig, acerca:vAcerca }[vista];
+  $('#main').innerHTML = fn();
+  if (vista==='asistencia') initGrilla();
+  if (vista==='licencias' && UI.licTab==='importar') initDropzone();
+}
+function bannerBackup(){
+  const u = DB.config.ultimoBackup;
+  const dias = u ? diffD(u.slice(0,10), hoy()) : null;
+  $('#banner').innerHTML = (u==null || dias>7)
+    ? `<div class="banner noprint">⚠️ ${u?`Hace ${dias} días que no hacés una copia de seguridad.`:'Todavía no hiciste ninguna copia de seguridad.'} Los datos se guardan solo en este navegador. <button class="btn s d" onclick="exportarBackup()">Hacer copia ahora</button></div>` : '';
+}
+function toast(msg, tipo='', accion=null){
+  const d = document.createElement('div'); d.className = 'toast ' + tipo; d.innerHTML = h(msg);
+  if (accion){ const b = document.createElement('button'); b.className='btn s'; b.textContent=accion[0]; b.onclick=()=>{accion[1](); d.remove();}; d.appendChild(document.createElement('br')); d.appendChild(b); }
+  $('#toasts').appendChild(d); setTimeout(()=>d.remove(), accion?9000:4000);
+}
+function modal(html, cls=''){ $('#modalRoot').innerHTML = `<div class="modal-bg" onclick="if(event.target===this)cerrarModal()"><div class="modal ${cls}">${html}</div></div>`; const i = $('#modalRoot input:not([type=hidden]),#modalRoot select,#modalRoot textarea'); if (i) setTimeout(()=>i.focus(),30); }
+function cerrarModal(){ $('#modalRoot').innerHTML = ''; document.body.classList.remove('modal-print'); }
+function confirmar(msg, conTexto=false, etiqueta='Justificación'){
+  return new Promise(res => {
+    window._conf = v => { cerrarModal(); res(v); };
+    modal(`<h2>Confirmar</h2><p>${h(msg)}</p>${conTexto?`<div class="f"><label>${h(etiqueta)}</label><textarea id="confTxt"></textarea></div>`:''}
+      <div class="acc"><button class="btn" onclick="_conf(false)">Cancelar</button>
+      <button class="btn p" onclick="${conTexto?`(document.getElementById('confTxt').value.trim()?_conf(document.getElementById('confTxt').value.trim()):alert('Escribí una justificación'))`:'_conf(true)'}">Aceptar</button></div>`);
+  });
+}
+const optPersonas = (sel='', todas=false) => (todas?DB.personal.slice().sort((a,b)=>a.nombre.localeCompare(b.nombre)):activos()).map(p=>`<option value="${p.id}" ${p.id===sel?'selected':''}>${h(p.nombre)} (Guardia ${p.guardia})</option>`).join('');
+const optG = (sel, vacio) => (vacio?`<option value="">${vacio}</option>`:'') + GUARDIAS.map(g=>`<option ${g===sel?'selected':''} value="${g}">Guardia ${g}</option>`).join('');
+const printHead = t => `<div class="ph"><img src="logo-etac.jpg" onerror="this.remove()"><div><b>${h(DB.config.institucion)}</b><br>${h(t)}</div><div style="margin-left:auto;font-size:11px">Impreso: ${fmt(hoy())}</div></div>`;
+const printFoot = () => `<div class="pf">Sistema desarrollado por JMM Gestiones y Tecnologías</div>`;
+const val = id => document.getElementById(id)?.value ?? '';
+function imprimir(){ window.print(); }
+
+/* ---------- Exportar CSV (se abre en Excel) ---------- */
+function descargar(nombre, contenido, tipo){ const b = new Blob([contenido], {type:tipo}); const a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = nombre; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 2000); }
+function exportCSV(nombre, filas){ const esc = v => { v = String(v ?? ''); return /[;"\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v; }; descargar(nombre, '﻿' + filas.map(r=>r.map(esc).join(';')).join('\r\n'), 'text/csv;charset=utf-8'); }
+function tablaACSV(sel, nombre){ const t = document.querySelector(sel); if (!t) return; exportCSV(nombre, Array.from(t.querySelectorAll('tr')).map(tr=>Array.from(tr.children).filter(c=>!c.classList.contains('noprint')).map(c=>c.innerText.trim()))); }
+
+/* =====================================================
+   6. VISTA: INICIO
+   ===================================================== */
+function vInicio(){
+  const t = hoy(), m = addD(t,1);
+  const gH = guardiaDelDia(t), gM = guardiaDelDia(m);
+  const ps = activos();
+  const enCM = ps.filter(p => carpetaEn(p.id,t));
+  const enLA = ps.filter(p => licenciaEn(p.id,t));
+  const prox = [];
+  DB.licencias.forEach(l => l.franjas.forEach(f => { if (f.desde > t && f.desde <= addD(t,15)) prox.push({p:l.personaId, f:f.desde, h:f.hasta}); }));
+  prox.sort((a,b)=>a.f.localeCompare(b.f));
+  const sal = ps.map(p => ({p, s:saldo(p.id)}));
+  const conF = sal.filter(x=>x.s.disp>0), cerca = sal.filter(x=>x.s.disp<=0 && x.s.avance>=1200);
+  const cg = DB.cambios.filter(c=>!c.devuelto);
+  const caps = DB.capacitaciones.filter(c=>c.fecha>=t).sort((a,b)=>a.fecha.localeCompare(b.fecha)).slice(0,5);
+  const certP = DB.carpetas.filter(c=>!c.presento);
+  const li = (arr, f) => arr.length ? `<ul>${arr.map(f).join('')}</ul>` : '<div class="muted">Nadie</div>';
+  const bloqueG = (g, f, tit) => {
+    if (!g) return `<div class="card"><h3>${tit}</h3><div class="muted">Configurá la rotación de guardias.</div></div>`;
+    const mi = ps.filter(p=>guardiaEn(p,f)===g);
+    const fuera = mi.map(p=>({p, c:celda(p.id,f)})).filter(x=>x.c.cod && !['P','PASIVA','—'].includes(x.c.cod));
+    return `<div class="card"><h3>${tit}: <span class="tag n">Guardia ${g}</span> <span class="muted">${fmt(f)}</span></h3>
+      <div><b>${mi.length}</b> integrantes · <b>${mi.length - fuera.filter(x=>!x.c.sug).length}</b> disponibles</div>
+      ${fuera.length?`<div style="margin-top:6px">${fuera.map(x=>`<span class="tag ${x.c.cod==='CM'?'r':'a'}" style="margin:2px">${h(x.p.nombre)}: ${x.c.cod}${x.c.sug?'?':''}</span>`).join('')}</div>`:'<div class="muted">Sin ausencias cargadas.</div>'}
+      <button class="btn s" style="margin-top:8px" onclick="abrirAsistencia('${g}','${f}')">Ver planilla</button></div>`;
+  };
+  return `<h1>Panel de inicio <span class="muted">${fmt(t)}</span></h1>
+  <div class="grid g2">${bloqueG(gH,t,'Guardia de hoy')}${bloqueG(gM,m,'Guardia de mañana')}</div>
+  <div class="grid g3">
+    <div class="stat r"><div class="n">${enCM.length}</div><div class="l">De carpeta médica hoy</div>${li(enCM,p=>`<li>${h(p.nombre)} (Guardia ${p.guardia}) – vuelve ${fmt(addD(finCarpeta(carpetaEn(p.id,t)),1))}</li>`)}</div>
+    <div class="stat"><div class="n">${enLA.length}</div><div class="l">De licencia anual hoy</div>${li(enLA,p=>`<li>${h(p.nombre)} (Guardia ${p.guardia})</li>`)}</div>
+    <div class="stat c"><div class="n">${prox.length}</div><div class="l">Salen de licencia en los próximos 15 días</div>${li(prox,x=>`<li>${fmt(x.f)}: ${h(nombreP(x.p))} (hasta ${fmt(x.h)})</li>`)}</div>
+    <div class="stat v"><div class="n">${conF.length}</div><div class="l">Con franco disponible</div>${li(conF,x=>`<li>${h(x.p.nombre)}: <b>${x.s.disp}</b></li>`)}</div>
+    <div class="stat a"><div class="n">${cerca.length}</div><div class="l">Cerca del franco (más de 20 h)</div>${li(cerca,x=>`<li>${h(x.p.nombre)}: faltan ${minHM(x.s.resto)}</li>`)}</div>
+    <div class="stat a"><div class="n">${cg.length}</div><div class="l">Cambios de guardia sin devolver</div>${li(cg,c=>`<li>${h(nombreP(c.personaId))} ↔ ${h(nombreP(c.conId))}${c.devolucion?' – devuelve '+fmt(c.devolucion):''}</li>`)}</div>
+    <div class="stat c"><div class="n">${caps.length}</div><div class="l">Próximas capacitaciones</div>${li(caps,c=>`<li>${fmt(c.fecha)}: ${h(c.tema)}</li>`)}</div>
+    <div class="stat r"><div class="n">${certP.length}</div><div class="l">Certificados médicos pendientes</div>${li(certP,c=>`<li>${h(nombreP(c.personaId))} (desde ${fmt(c.inicio)})</li>`)}</div>
+  </div>
+  <h2>Vista por guardia</h2>
+  <div class="grid g3">${GUARDIAS.map(g=>{ const mi = ps.filter(p=>guardiaEn(p,t)===g); return `<div class="card"><h3>Guardia ${g} <span class="muted">(${mi.length})</span></h3>
+    <div style="max-height:260px;overflow:auto">${mi.map(p=>{ const s=saldo(p.id); const c = carpetaEn(p.id,t)?'<span class="tag r">CM</span>':licenciaEn(p.id,t)?'<span class="tag">LA</span>':''; return `<div style="display:flex;justify-content:space-between;gap:6px;border-bottom:1px solid #eee;padding:3px 0"><button class="btn lnk" onclick="ficha('${p.id}')">${h(p.nombre)}</button><span>${c} ${s.disp>0?`<span class="tag v">${s.disp} FC</span>`:''}</span></div>`; }).join('')}</div></div>`; }).join('')}</div>`;
+}
+
+/* =====================================================
+   7. VISTA: PERSONAL
+   ===================================================== */
+let filtroP = {q:'', g:'', inact:false};
+function vPersonal(){
+  const q = norm(filtroP.q);
+  const lista = DB.personal.filter(p => (filtroP.inact || p.activo) && (!filtroP.g || p.guardia===filtroP.g) && (!q || norm(p.nombre+' '+p.dni+' '+p.cargo).includes(q))).sort((a,b)=>a.guardia.localeCompare(b.guardia)||a.nombre.localeCompare(b.nombre));
+  return `<h1>Personal</h1>
+  <div class="card noprint"><div class="row">
+    <div><label>Buscar</label><input id="pq" value="${h(filtroP.q)}" oninput="filtroP.q=this.value;refrescarListaP()" placeholder="Nombre, DNI, cargo…"></div>
+    <div><label>Guardia</label><select onchange="filtroP.g=this.value;render()">${optG(filtroP.g,'Todas')}</select></div>
+    <div><label><input type="checkbox" ${filtroP.inact?'checked':''} onchange="filtroP.inact=this.checked;render()"> Mostrar inactivos</label></div>
+    <button class="btn p" onclick="editarPersona()">+ Nueva persona</button>
+    <button class="btn" onclick="importarPersonal()">Importar desde Excel/CSV</button>
+    <button class="btn" onclick="tablaACSV('#tblP','personal.csv')">Exportar CSV</button>
+    <button class="btn" onclick="imprimir()">Imprimir</button>
+  </div></div>
+  ${printHead('Listado de personal')}
+  <div class="tbl-wrap"><table class="tbl" id="tblP"><thead><tr><th>#</th><th>Apellido y nombre</th><th>Guardia</th><th>DNI / Legajo</th><th>Cargo</th><th>Teléfono</th><th>Estado</th><th class="num">Francos disp.</th><th class="noprint"></th></tr></thead>
+  <tbody>${lista.map((p,i)=>`<tr data-q="${h(norm(p.nombre+' '+p.dni+' '+p.cargo))}"><td>${i+1}</td><td><button class="btn lnk" onclick="ficha('${p.id}')">${h(p.nombre)}</button></td><td>${p.guardia}</td><td>${h(p.dni)}</td><td>${h(p.cargo)}</td><td>${h(p.tel)}</td>
+    <td>${p.activo?'<span class="tag v">Activo</span>':'<span class="tag">Inactivo</span>'}</td><td class="num">${saldo(p.id).disp}</td>
+    <td class="noprint"><button class="btn s" onclick="editarPersona('${p.id}')">Editar</button></td></tr>`).join('')}</tbody></table></div>
+  <p class="muted">${lista.length} personas.</p>${printFoot()}`;
+}
+function refrescarListaP(){ const q = norm(filtroP.q); $$('#tblP tbody tr').forEach(tr => tr.style.display = (!q || tr.dataset.q.includes(q)) ? '' : 'none'); }
+function editarPersona(id){
+  const p = id ? persona(id) : nuevaPersona({nombre:''});
+  const s = Math.max(0, p.saldoInicialMin||0);
+  modal(`<h2>${id?'Editar':'Nueva'} persona</h2>
+  <div class="grid g2">
+    <div class="f"><label>Apellido y nombre *</label><input id="pn" value="${h(p.nombre)}" placeholder="PEREZ JUAN"></div>
+    <div class="f"><label>DNI o legajo</label><input id="pd" value="${h(p.dni)}"></div>
+    <div class="f"><label>Guardia</label><select id="pg">${optG(p.guardia)}</select></div>
+    <div class="f"><label>Si cambia de guardia, desde qué fecha</label><input type="date" id="pgd" value="${hoy()}"></div>
+    <div class="f"><label>Cargo o jerarquía</label><input id="pc" value="${h(p.cargo)}"></div>
+    <div class="f"><label>Teléfono</label><input id="pt" value="${h(p.tel)}"></div>
+    <div class="f"><label>Fecha de ingreso</label><input type="date" id="pi" value="${h(p.ingreso)}"></div>
+    <div class="f"><label>Estado</label><select id="pa"><option value="1" ${p.activo?'selected':''}>Activo</option><option value="0" ${!p.activo?'selected':''}>Inactivo</option></select></div>
+    <div class="f"><label>Horas extras acumuladas antes de usar el sistema</label><div class="row"><input type="number" min="0" id="psh" style="width:90px" value="${Math.floor(s/60)}"> h <input type="number" min="0" max="59" id="psm" style="width:80px" value="${s%60}"> min</div><div class="muted">Saldo que traía de las planillas en papel (ya descontados los francos que se tomó).</div></div>
+  </div>
+  <div class="f"><label>Observaciones</label><textarea id="po">${h(p.obs)}</textarea></div>
+  <div class="acc">${id?`<button class="btn" style="margin-right:auto" onclick="borrarPersona('${id}')">Eliminar</button>`:''}<button class="btn" onclick="cerrarModal()">Cancelar</button><button class="btn p" onclick="guardarPersona('${id||''}')">Guardar</button></div>`);
+}
+function guardarPersona(id){
+  const nombre = mayus(val('pn')); if (!nombre) return alert('Falta el apellido y nombre');
+  let p = id ? persona(id) : null;
+  if (!p){ p = nuevaPersona({nombre, guardia:val('pg')}); DB.personal.push(p); }
+  const g = val('pg');
+  if (id && g !== p.guardia){ p.historialGuardia = p.historialGuardia || [{guardia:p.guardia, desde:'2000-01-01'}]; p.historialGuardia.push({guardia:g, desde: val('pgd')||hoy()}); }
+  Object.assign(p, { nombre, dni:val('pd').trim(), guardia:g, cargo:val('pc').trim(), tel:val('pt').trim(), ingreso:val('pi'), activo: val('pa')==='1', obs:val('po'), saldoInicialMin: (+val('psh')||0)*60 + (+val('psm')||0) });
+  save(); cerrarModal(); render(); toast('Datos guardados','ok');
+}
+async function borrarPersona(id){
+  const n = DB.horas.filter(x=>x.personaId===id).length + DB.francos.filter(x=>x.personaId===id).length + DB.licencias.filter(x=>x.personaId===id).length + DB.carpetas.filter(x=>x.personaId===id).length;
+  if (n && !(await confirmar(`Esta persona tiene ${n} registros. Si la eliminás se borran también. Para conservar el historial conviene marcarla como "Inactivo". ¿Eliminar igual?`))) return;
+  if (!n && !(await confirmar('¿Eliminar esta persona?'))) return;
+  DB.personal = DB.personal.filter(p=>p.id!==id);
+  ['horas','francos','licencias','carpetas','cambios','novedades'].forEach(k => DB[k] = DB[k].filter(x=>x.personaId!==id));
+  Object.keys(DB.asistencia).forEach(k=>{ if (k.startsWith(id+'|')) delete DB.asistencia[k]; });
+  DB.capacitaciones.forEach(c=>delete c.asistentes[id]);
+  save(); cerrarModal(); render();
+}
+function importarPersonal(){
+  modal(`<h2>Importar personal</h2><p>Elegí un Excel o CSV con una columna <b>Apellido y nombre</b> y una columna <b>Guardia</b> (A, B o C). Opcionales: DNI, Cargo, Teléfono. Las personas que ya existen no se duplican.</p>
+  <input type="file" id="fper" accept=".csv,.xlsx,.xls"><div id="perRes" style="margin-top:10px"></div>
+  <div class="acc"><button class="btn" onclick="cerrarModal()">Cerrar</button><button class="btn p" onclick="procesarPersonal()">Importar</button></div>`);
+}
+async function procesarPersonal(){
+  const f = $('#fper').files[0]; if (!f) return alert('Elegí un archivo');
+  try{
+    const filas = await leerTabla(f);
+    const hi = filas.findIndex(r => r.some(c => /nombre|apellido|agente/.test(norm(c))));
+    if (hi < 0) return $('#perRes').innerHTML = '<div class="err">No encontré la columna de apellido y nombre.</div>';
+    const hd = filas[hi].map(norm), col = re => hd.findIndex(x=>re.test(x));
+    const cN = col(/nombre|apellido|agente/), cG = col(/guardia/), cD = col(/dni|legajo/), cC = col(/cargo|jerarq/), cT = col(/tel/);
+    let nuevos = 0, exist = 0;
+    for (const r of filas.slice(hi+1)){
+      const n = mayus(r[cN]); if (!n) continue;
+      if (DB.personal.some(p => claveNombre(p.nombre)===claveNombre(n))){ exist++; continue; }
+      const g = String(r[cG]||'').toUpperCase().replace(/GUARDIA|\s|"/g,'');
+      DB.personal.push(nuevaPersona({nombre:n, guardia: GUARDIAS.includes(g)?g:'A', dni: cD>=0?String(r[cD]||''):'', cargo: cC>=0?String(r[cC]||''):'', tel: cT>=0?String(r[cT]||''):''}));
+      nuevos++;
+    }
+    save(); render(); $('#perRes').innerHTML = `<div class="okbox">${nuevos} personas agregadas · ${exist} ya existían.</div>`;
+  }catch(e){ $('#perRes').innerHTML = `<div class="err">${h(e.message)}</div>`; }
+}
+
+/* ---------- Ficha individual ---------- */
+function ficha(id){
+  const p = persona(id); const s = saldo(id); const t = hoy();
+  const hs = DB.horas.filter(x=>x.personaId===id).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const fr = DB.francos.filter(x=>x.personaId===id).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const li = DB.licencias.filter(x=>x.personaId===id).sort((a,b)=>b.periodo.localeCompare(a.periodo));
+  const ca = DB.carpetas.filter(x=>x.personaId===id).sort((a,b)=>b.inicio.localeCompare(a.inicio));
+  const cp = DB.capacitaciones.filter(c=>c.asistentes[id]).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const y = t.slice(0,4), mth = t.slice(0,7);
+  const diasCM = (pref) => ca.reduce((n,c)=>{ let k=0; for(let f=c.inicio; f<=finCarpeta(c); f=addD(f,1)) if (f.startsWith(pref)) k++; return n+k; },0);
+  const asis = Object.entries(DB.asistencia).filter(([k])=>k.startsWith(id+'|')).map(([k,v])=>({f:k.split('|')[1], ...v})).filter(x=>x.f.startsWith(y));
+  const cuenta = {}; asis.forEach(a=>cuenta[a.cod]=(cuenta[a.cod]||0)+1);
+  const horasCap = cp.filter(c=>['asistio','aprobado'].includes(c.asistentes[id])).reduce((n,c)=>n+(+c.horas||0),0);
+  document.body.classList.add('modal-print');
+  modal(`${printHead('Ficha individual')}
+  <div class="row" style="justify-content:space-between"><h2 style="margin:0">${h(p.nombre)}</h2><div class="noprint"><button class="btn s" onclick="cerrarModal();editarPersona('${id}')">Editar datos</button> <button class="btn s d" onclick="imprimir()">Imprimir ficha</button> <button class="btn s" onclick="cerrarModal()">Cerrar</button></div></div>
+  <p>Guardia <b>${p.guardia}</b> · ${h(p.cargo)||'Sin cargo'} · DNI/Legajo: ${h(p.dni)||'—'} · Tel: ${h(p.tel)||'—'} · Ingreso: ${fmt(p.ingreso)||'—'} · ${p.activo?'Activo':'Inactivo'}</p>
+  ${p.obs?`<p class="muted">${h(p.obs)}</p>`:''}
+  <div class="grid g4">
+    <div class="stat"><div class="n">${minHM(s.min)}</div><div class="l">Horas extras acumuladas${p.saldoInicialMin?` (incluye ${minHM(p.saldoInicialMin)} de saldo inicial)`:''}</div></div>
+    <div class="stat v"><div class="n">${s.disp}</div><div class="l">Francos disponibles (${s.ganados} ganados − ${s.tomados} tomados)</div></div>
+    <div class="stat a"><div class="n">${minHM(s.resto)}</div><div class="l">Faltan para el próximo franco</div><div class="bar ${s.avance>=1200?'ok':''}"><div style="width:${s.avance/14.4}%"></div></div></div>
+    <div class="stat r"><div class="n">${diasCM(mth)} / ${diasCM(y)}</div><div class="l">Días de carpeta médica (mes / año)</div></div>
+  </div>
+  <h3>Asistencia ${y}</h3><div>${Object.keys(cuenta).length?Object.entries(cuenta).map(([k,v])=>`<span class="tag" style="margin:2px">${h(k)}: ${v}</span>`).join(''):'<span class="muted">Sin registros.</span>'}</div>
+  <h3>Formularios de horas extras (suman al saldo)</h3>
+  ${hs.length?`<div class="tbl-wrap"><table class="tbl"><tr><th>Fecha</th><th>Tipo</th><th>Horario</th><th class="num">Tiempo</th><th>Motivo</th><th>N.º form.</th></tr>${hs.map(x=>`<tr class="${x.anulado?'anul':''}"><td>${fmt(x.fecha)}</td><td>${tipoHora(x.tipo)}</td><td>${x.desde} a ${x.hasta}</td><td class="num">${minHM(x.min)}</td><td>${h(x.motivo)}${x.anulado?` (ANULADO: ${h(x.motivoAnulacion)})`:''}</td><td>${h(x.nroForm)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Sin formularios.</p>'}
+  <h3>Francos compensatorios tomados</h3>${fr.length?`<p>${fr.map(x=>`${fmt(x.fecha)}${x.forzado?' (forzado)':''}`).join(' · ')}</p>`:'<p class="muted">Ninguno.</p>'}
+  <h3>Licencia anual</h3>${li.length?li.map(l=>{const c=licDe(l); return `<p><b>${h(l.periodo)}</b>: ${l.disponibles} disponibles · ${c.usados} usados · <b>${c.restantes} restantes</b><br>${l.franjas.map((f,i)=>`${i+1}.ª franja: ${fmt(f.desde)} – ${fmt(f.hasta)}`).join(' · ')}</p>`;}).join(''):'<p class="muted">Sin licencias cargadas.</p>'}
+  <h3>Carpetas médicas</h3>${ca.length?`<div class="tbl-wrap"><table class="tbl"><tr><th>Desde</th><th>Hasta</th><th class="num">Días</th><th>Tipo</th><th>Certificado</th></tr>${ca.map(c=>`<tr><td>${fmt(c.inicio)}</td><td>${fmt(finCarpeta(c))}</td><td class="num">${c.dias}</td><td>${h(c.tipo)}</td><td>${c.presento?'Presentado':'<span class="tag r">Pendiente</span>'} ${h(c.nroCert)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Ninguna.</p>'}
+  <h3>Capacitaciones (${horasCap} h)</h3>${cp.length?`<p>${cp.map(c=>`${fmt(c.fecha)} – ${h(c.tema)} (${estadoCap(c.asistentes[id])})`).join('<br>')}</p>`:'<p class="muted">Ninguna.</p>'}
+  ${printFoot()}`, 'xl');
+}
+
+/* =====================================================
+   8. VISTA: ASISTENCIA (planilla mensual por guardia)
+   ===================================================== */
+function abrirAsistencia(g, f){ UI.asis = {g, y:+f.slice(0,4), m:+f.slice(5,7)-1}; ir('asistencia'); }
+function vAsistencia(){
+  if (!UI.asis){ const t = hoy(); UI.asis = {g: guardiaDelDia(t)||'A', y:+t.slice(0,4), m:+t.slice(5,7)-1}; }
+  const {g,y,m} = UI.asis;
+  const fechas = fechasGuardia(g,y,m);
+  const per = DB.personal.filter(p => fechas.some(f=>guardiaEn(p,f)===g) && (p.activo || fechas.some(f=>DB.asistencia[kAs(p.id,f)]))).sort((a,b)=>a.nombre.localeCompare(b.nombre));
+  const cods = DB.config.codigos;
+  const tot = {}; fechas.forEach(f=>tot[f]=0);
+  const filas = per.map((p,i) => {
+    const cnt = {};
+    const tds = fechas.map(f => {
+      if (guardiaEn(p,f)!==g) return `<td><button class="cel nc" disabled>×</button></td>`;
+      const c = celda(p.id,f); const cd = codigo(c.cod);
+      if (c.cod && !c.sug){ cnt[c.cod]=(cnt[c.cod]||0)+1; if (c.cod==='P') tot[f]++; }
+      const style = cd && c.cod ? `background:${cd.color};color:${cd.texto}` : '';
+      const tip = [cd?.nombre, c.auto?'(automático por licencia)':'', c.sug?'(sugerido: tiene carpeta médica)':'', c.nota, c.conId?'con '+nombreP(c.conId):''].filter(Boolean).join(' – ');
+      return `<td><button class="cel ${c.auto?'auto':''} ${c.sug?'sug':''}" style="${style}" data-p="${p.id}" data-f="${f}" title="${h(tip)}">${h(c.cod)}${c.sug?'?':''}${c.nota||c.conId?'<span class="dot"></span>':''}</button></td>`;
+    }).join('');
+    return `<tr><td class="nro">${i+1}</td><td class="nom">${h(p.nombre)}</td>${tds}<td class="tot">${Object.entries(cnt).map(([k,v])=>`${k}:${v}`).join(' ')}</td></tr>`;
+  }).join('');
+  const minP = +DB.config.minPresentes||0;
+  return `<h1 class="noprint">Asistencia por guardia</h1>
+  <div class="card noprint"><div class="row">
+    <div><label>Guardia</label><select onchange="UI.asis.g=this.value;render()">${optG(g)}</select></div>
+    <div><label>Mes</label><select onchange="UI.asis.m=+this.value;render()">${MESES.map((x,i)=>`<option value="${i}" ${i===m?'selected':''}>${x}</option>`).join('')}</select></div>
+    <div><label>Año</label><input type="number" style="width:100px" value="${y}" onchange="UI.asis.y=+this.value;render()"></div>
+    <button class="btn" onclick="moverMes(-1)">◀ Mes anterior</button><button class="btn" onclick="moverMes(1)">Mes siguiente ▶</button>
+    <button class="btn" onclick="tablaACSV('#plan','asistencia_${MESES[m]}_${y}_G${g}.csv')">Exportar CSV</button>
+    <button class="btn d" onclick="imprimir()">Imprimir planilla</button>
+  </div>
+  <p class="muted" style="margin:10px 0 0">Hacé clic en una casilla o usá el teclado: ${cods.filter(c=>c.tecla).map(c=>`<b>${h(c.tecla.toUpperCase())}</b>=${h(c.sigla)}`).join(' · ')} · <b>Supr</b>=borrar · <b>Enter</b>=detalle (nota, cambio de guardia) · flechas para moverse.</p></div>
+  ${printHead('')}
+  <h2 style="text-align:center;margin-top:0">${MESES[m].toUpperCase()} ${y} - GUARDIA "${g}"</h2>
+  ${per.length?`<div class="tbl-wrap" style="max-height:72vh"><table class="plan" id="plan">
+    <thead><tr><th>#</th><th style="text-align:left;position:sticky;left:0;z-index:3">APELLIDO NOMBRE</th>${fechas.map(f=>`<th>${+f.slice(8)} ${MES_C[m]}<br><span style="font-weight:400">${['DOM','LUN','MAR','MIÉ','JUE','VIE','SÁB'][D(f).getUTCDay()]}</span></th>`).join('')}<th>Totales</th></tr>
+    <tr class="noprint"><th></th><th style="position:sticky;left:0;z-index:3"></th>${fechas.map(f=>`<th><button class="btn s" style="font-size:11px;padding:2px 5px" onclick="todosPresentes('${f}')">Todos P</button></th>`).join('')}<th></th></tr></thead>
+    <tbody>${filas}</tbody>
+    <tfoot><tr><td></td><td class="nom">Presentes</td>${fechas.map(f=>`<td class="${tot[f]&&tot[f]<minP?'bajo':''}" title="${tot[f]&&tot[f]<minP?'Menos del mínimo configurado ('+minP+')':''}">${tot[f]}</td>`).join('')}<td></td></tr></tfoot>
+  </table></div>`:'<div class="warn">No hay personal en esta guardia.</div>'}
+  <div class="leyenda" style="margin-top:10px">${cods.map(c=>`<span><b style="background:${c.color};color:${c.texto}">${h(c.sigla)}</b>${h(c.nombre)}</span>`).join('')}<span class="muted">· En cursiva: completado automáticamente por licencia (LA) o sugerido por carpeta médica (CM?).</span></div>
+  ${printFoot()}`;
+}
+function moverMes(d){ let {y,m} = UI.asis; m += d; if (m<0){m=11;y--;} if (m>11){m=0;y++;} UI.asis.y=y; UI.asis.m=m; render(); }
+function initGrilla(){
+  const plan = $('#plan'); if (!plan) return;
+  plan.addEventListener('click', e => { const b = e.target.closest('.cel'); if (b && !b.disabled) detalleCelda(b.dataset.p, b.dataset.f); });
+  plan.addEventListener('keydown', async e => {
+    const b = e.target.closest('.cel'); if (!b || b.disabled) return;
+    const cells = $$('#plan .cel'); const cols = $$('#plan thead tr:first-child th').length - 3;
+    const i = cells.indexOf(b);
+    const mv = {ArrowRight:1, ArrowLeft:-1, ArrowDown:cols, ArrowUp:-cols}[e.key];
+    if (mv){ e.preventDefault(); const n = cells[i+mv]; if (n) n.focus(); return; }
+    if (e.key==='Enter'){ e.preventDefault(); detalleCelda(b.dataset.p, b.dataset.f); return; }
+    if (e.key==='Delete' || e.key==='Backspace'){ e.preventDefault(); await setCodigo(b.dataset.p, b.dataset.f, ''); refocus(i); return; }
+    const c = DB.config.codigos.find(c => c.tecla && c.tecla.toLowerCase()===e.key.toLowerCase());
+    if (c && !e.ctrlKey && !e.metaKey){ e.preventDefault(); await setCodigo(b.dataset.p, b.dataset.f, c.sigla); if (c.sigla==='CG') detalleCelda(b.dataset.p,b.dataset.f); else refocus(i+cols); }
+  });
+}
+function refocus(i){ const c = $$('#plan .cel'); (c[i] || c[c.length-1])?.focus(); }
+async function setCodigo(pid, f, cod, extra = {}){
+  const k = kAs(pid,f); const prev = DB.asistencia[k] || {};
+  if (prev.cod==='FC' && cod!=='FC'){ DB.francos = DB.francos.filter(x => x.origen !== k); }
+  if (cod==='FC' && prev.cod!=='FC'){
+    const s = saldo(pid); let forz = false, just = '';
+    if (s.disp < 1){
+      just = await confirmar(`${nombreP(pid)} no tiene francos disponibles (le faltan ${minHM(s.resto)} para el próximo). ¿Registrar el franco igual?`, true);
+      if (!just) return false; forz = true;
+    }
+    DB.francos.push({id:uid(), personaId:pid, fecha:f, obs:'Cargado desde la planilla de asistencia', forzado:forz, justif:just, origen:k});
+  }
+  if (cod==='CG' || prev.cod==='CG'){ DB.cambios = DB.cambios.filter(c => c.origen !== k); }
+  if (!cod){ delete DB.asistencia[k]; }
+  else {
+    DB.asistencia[k] = {cod, nota: extra.nota ?? (prev.cod===cod?prev.nota:'') ?? '', conId: extra.conId ?? (cod==='CG'?prev.conId:'') ?? ''};
+    if (cod==='CG' && DB.asistencia[k].conId) DB.cambios.push({id:uid(), personaId:pid, conId:DB.asistencia[k].conId, fecha:f, devolucion:extra.devolucion||'', devuelto:!!extra.devuelto, origen:k});
+  }
+  save(); render();
+  if (cod==='CM' && !carpetaEn(pid,f)) toast(`${nombreP(pid)} figura con CM el ${fmt(f)} pero no tiene carpeta médica cargada.`, '', ['Cargar carpeta médica', ()=>editarCarpeta(null, {personaId:pid, inicio:f})]);
+  return true;
+}
+function detalleCelda(pid, f){
+  const c = celda(pid,f); const r = DB.asistencia[kAs(pid,f)] || {};
+  const cb = DB.cambios.find(x=>x.origen===kAs(pid,f)) || {};
+  modal(`<h2>${h(nombreP(pid))} – ${fmt(f)}</h2>
+  ${c.auto?'<div class="warn">Tiene licencia anual cargada para esta fecha (LA automático). Si elegís otro código, se reemplaza solo en la planilla.</div>':''}
+  ${c.sug?'<div class="warn">Tiene una carpeta médica que abarca esta fecha.</div>':''}
+  <div class="codes">${DB.config.codigos.map(x=>`<button class="btn" style="background:${x.color};color:${x.texto};${r.cod===x.sigla?'outline:3px solid #111':''}" onclick="elegirCod('${h(x.sigla)}')">${h(x.sigla)}<br><span style="font-size:11px;font-weight:400">${h(x.nombre)}</span></button>`).join('')}
+  <button class="btn" onclick="elegirCod('')">Borrar</button></div>
+  <input type="hidden" id="dcCod" value="${h(r.cod||'')}">
+  <div class="f" style="margin-top:10px"><label>Nota corta (opcional)</label><input id="dcNota" value="${h(r.nota||'')}" placeholder="Ej.: Taller, salió 10:00…"></div>
+  <fieldset style="border:1px solid #ddd;border-radius:8px"><legend><b>Cambio de guardia (CG)</b></legend>
+    <div class="grid g2"><div class="f"><label>Se cambió con</label><select id="dcCon"><option value="">—</option>${optPersonas(r.conId||'')}</select></div>
+    <div class="f"><label>Fecha en que devuelve la guardia</label><input type="date" id="dcDev" value="${h(cb.devolucion||'')}"></div></div>
+    <label><input type="checkbox" id="dcDevu" ${cb.devuelto?'checked':''}> Ya la devolvió</label></fieldset>
+  <div class="acc"><button class="btn" onclick="cerrarModal()">Cancelar</button><button class="btn p" onclick="guardarCelda('${pid}','${f}')">Guardar</button></div>`);
+  window.elegirCod = cod => { $('#dcCod').value = cod; $$('.codes .btn').forEach(b=>b.style.outline=''); const b = $$('.codes .btn').find(b=>b.firstChild.textContent===cod); if (b) b.style.outline='3px solid #111'; if (cod!=='CG') guardarCelda(pid,f); };
+}
+async function guardarCelda(pid, f){
+  const cod = val('dcCod'), nota = val('dcNota').trim(), conId = val('dcCon'), devolucion = val('dcDev'), devuelto = $('#dcDevu').checked;
+  cerrarModal();
+  await setCodigo(pid, f, cod, {nota, conId: cod==='CG'?conId:'', devolucion, devuelto});
+}
+async function todosPresentes(f){
+  const {g} = UI.asis; let n = 0;
+  DB.personal.filter(p=>p.activo && guardiaEn(p,f)===g).forEach(p => { if (!celda(p.id,f).cod){ DB.asistencia[kAs(p.id,f)] = {cod:'P', nota:''}; n++; } });
+  save(); render(); toast(`${n} personas marcadas presentes el ${fmt(f)}. Corregí solo las excepciones.`,'ok');
+}
+
+/* =====================================================
+   9. VISTA: HORAS EXTRAS
+   ===================================================== */
+const tipoHora = t => ({ingreso:'Ingreso anticipado', retiro:'Retiro posterior', otro:'Otro'}[t] || t);
+let filtroH = {p:'', mes:''};
+function vHoras(){
+  const sal = activos().map(p=>({p, s:saldo(p.id)}));
+  const ord = UI.horasOrden;
+  sal.sort((a,b)=> ord==='nombre'? a.p.nombre.localeCompare(b.p.nombre) : ord==='guardia'? (a.p.guardia.localeCompare(b.p.guardia)||a.p.nombre.localeCompare(b.p.nombre)) : (b.s.disp-a.s.disp || b.s.avance-a.s.avance));
+  const lista = DB.horas.filter(x=>(!filtroH.p||x.personaId===filtroH.p) && (!filtroH.mes||x.fecha.startsWith(filtroH.mes))).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  return `<h1>Horas extras</h1>
+  <div class="card noprint"><h3 style="margin-top:0">Cargar formulario de horas extras</h3>
+  <div class="grid g4">
+    <div class="f"><label>Persona *</label><select id="hp"><option value="">Elegir…</option>${optPersonas()}</select></div>
+    <div class="f"><label>Fecha *</label><input type="date" id="hf" value="${hoy()}"></div>
+    <div class="f"><label>Tipo</label><select id="ht"><option value="retiro">Retiro posterior</option><option value="ingreso">Ingreso anticipado</option><option value="otro">Otro</option></select></div>
+    <div class="f"><label>Hora desde *</label><input type="time" id="hd" oninput="prevH()"></div>
+    <div class="f"><label>Hora hasta *</label><input type="time" id="hh" oninput="prevH()"></div>
+    <div class="f"><label>Tiempo</label><div id="hprev" style="font-size:20px;font-weight:800;padding-top:6px">—</div></div>
+    <div class="f"><label>Motivo</label><input id="hm"></div>
+    <div class="f"><label>Autorizó</label><input id="ha"></div>
+    <div class="f"><label>N.º de formulario en papel</label><input id="hn"></div>
+  </div><button class="btn p" onclick="guardarHora()">Guardar formulario</button> <span class="muted">Si la hora "hasta" es menor que "desde", se toma que cruzó la medianoche.</span></div>
+
+  <h2>Saldo por persona <span class="muted">(cada 24 h = 1 franco)</span></h2>
+  <div class="row noprint" style="margin-bottom:8px"><div><label>Ordenar por</label><select onchange="UI.horasOrden=this.value;render()">
+    <option value="disp" ${ord==='disp'?'selected':''}>Saldo (mayor primero)</option><option value="nombre" ${ord==='nombre'?'selected':''}>Nombre</option><option value="guardia" ${ord==='guardia'?'selected':''}>Guardia</option></select></div>
+    <button class="btn" onclick="tablaACSV('#tblSal','saldos_horas_extras.csv')">Exportar CSV</button><button class="btn" onclick="imprimir()">Imprimir</button></div>
+  ${printHead('Saldos de horas extras y francos')}
+  <div class="tbl-wrap" style="max-height:60vh"><table class="tbl" id="tblSal"><thead><tr><th>Apellido y nombre</th><th>G</th><th class="num">Acumulado</th><th class="num">Ganados</th><th class="num">Tomados</th><th class="num">Disponibles</th><th>Hacia el próximo franco</th></tr></thead>
+  <tbody>${sal.map(({p,s})=>`<tr><td><button class="btn lnk" onclick="ficha('${p.id}')">${h(p.nombre)}</button></td><td>${p.guardia}</td><td class="num">${minHM(s.min)}</td><td class="num">${s.ganados}</td><td class="num">${s.tomados}</td>
+    <td class="num">${s.disp>0?`<span class="tag v">✔ ${s.disp}</span>`:s.disp<0?`<span class="tag r">${s.disp}</span>`:'0'}</td>
+    <td><div class="row" style="align-items:center;flex-wrap:nowrap"><div class="bar ${s.avance>=1200?'ok':''}" style="width:140px"><div style="width:${s.avance/14.4}%"></div></div><span style="font-size:13px">${minHM(s.avance)} / 24 h</span></div></td></tr>`).join('')}</tbody></table></div>
+
+  <h2>Formularios cargados</h2>
+  <div class="row noprint" style="margin-bottom:8px">
+    <div><label>Persona</label><select onchange="filtroH.p=this.value;render()"><option value="">Todas</option>${optPersonas(filtroH.p,true)}</select></div>
+    <div><label>Mes</label><input type="month" value="${filtroH.mes}" onchange="filtroH.mes=this.value;render()"></div>
+    <button class="btn" onclick="tablaACSV('#tblH','formularios_horas_extras.csv')">Exportar CSV</button></div>
+  <div class="tbl-wrap" style="max-height:60vh"><table class="tbl" id="tblH"><thead><tr><th>Fecha</th><th>Persona</th><th>Tipo</th><th>Horario</th><th class="num">Tiempo</th><th>Motivo</th><th>Autorizó</th><th>N.º form.</th><th class="noprint"></th></tr></thead>
+  <tbody>${lista.map(x=>`<tr class="${x.anulado?'anul':''}"><td>${fmt(x.fecha)}</td><td>${h(nombreP(x.personaId))}</td><td>${tipoHora(x.tipo)}</td><td>${x.desde} a ${x.hasta}</td><td class="num">${minHM(x.min)}</td><td>${h(x.motivo)}${x.anulado?`<br><small>ANULADO: ${h(x.motivoAnulacion)}</small>`:''}</td><td>${h(x.autorizo)}</td><td>${h(x.nroForm)}</td>
+    <td class="noprint">${x.anulado?`<button class="btn s" onclick="reactivarHora('${x.id}')">Reactivar</button>`:`<button class="btn s" onclick="editarHora('${x.id}')">Editar</button> <button class="btn s" onclick="anularHora('${x.id}')">Anular</button>`}</td></tr>`).join('') || '<tr><td colspan="9" class="muted">No hay formularios.</td></tr>'}</tbody></table></div>${printFoot()}`;
+}
+function prevH(){ const m = calcMin(val('hd'), val('hh')); $('#hprev').textContent = (val('hd')&&val('hh')) ? minHM(m) : '—'; }
+function guardarHora(){
+  const pid = val('hp'), f = val('hf'), de = val('hd'), ha = val('hh');
+  if (!pid || !f || !de || !ha) return alert('Completá persona, fecha, hora desde y hora hasta');
+  const antes = saldo(pid).ganados;
+  DB.horas.push({id:uid(), personaId:pid, fecha:f, tipo:val('ht'), desde:de, hasta:ha, min:calcMin(de,ha), motivo:val('hm').trim(), autorizo:val('ha').trim(), nroForm:val('hn').trim(), anulado:false});
+  save(); const s = saldo(pid);
+  render();
+  if (s.ganados > antes) toast(`🎉 ${nombreP(pid)} completó 24 h: tiene ${s.disp} franco(s) disponible(s).`,'ok'); else toast(`Guardado. A ${nombreP(pid)} le faltan ${minHM(s.resto)} para el próximo franco.`,'ok');
+}
+function editarHora(id){
+  const x = DB.horas.find(z=>z.id===id);
+  modal(`<h2>Editar formulario</h2><div class="grid g2">
+  <div class="f"><label>Persona</label><select id="ep">${optPersonas(x.personaId,true)}</select></div>
+  <div class="f"><label>Fecha</label><input type="date" id="ef" value="${x.fecha}"></div>
+  <div class="f"><label>Tipo</label><select id="et">${['retiro','ingreso','otro'].map(t=>`<option value="${t}" ${t===x.tipo?'selected':''}>${tipoHora(t)}</option>`).join('')}</select></div>
+  <div class="f"><label>Desde / hasta</label><div class="row"><input type="time" id="ed" value="${x.desde}"><input type="time" id="eh" value="${x.hasta}"></div></div>
+  <div class="f"><label>Motivo</label><input id="em" value="${h(x.motivo)}"></div><div class="f"><label>Autorizó</label><input id="ea" value="${h(x.autorizo)}"></div>
+  <div class="f"><label>N.º formulario</label><input id="en" value="${h(x.nroForm)}"></div></div>
+  <div class="acc"><button class="btn" onclick="cerrarModal()">Cancelar</button><button class="btn p" onclick="guardarEdHora('${id}')">Guardar</button></div>`);
+}
+function guardarEdHora(id){ const x = DB.horas.find(z=>z.id===id); Object.assign(x,{personaId:val('ep'), fecha:val('ef'), tipo:val('et'), desde:val('ed'), hasta:val('eh'), min:calcMin(val('ed'),val('eh')), motivo:val('em'), autorizo:val('ea'), nroForm:val('en')}); save(); cerrarModal(); render(); }
+async function anularHora(id){ const m = await confirmar('¿Anular este formulario? Deja de sumar al saldo, pero queda registrado.', true, 'Motivo de la anulación'); if (!m) return; const x = DB.horas.find(z=>z.id===id); x.anulado = true; x.motivoAnulacion = m; save(); render(); }
+function reactivarHora(id){ const x = DB.horas.find(z=>z.id===id); x.anulado = false; x.motivoAnulacion=''; save(); render(); }
+
+/* =====================================================
+   10. VISTA: FRANCOS COMPENSATORIOS
+   ===================================================== */
+let filtroF = {p:'', mes:''};
+function vFrancos(){
+  const lista = DB.francos.filter(x=>(!filtroF.p||x.personaId===filtroF.p)&&(!filtroF.mes||x.fecha.startsWith(filtroF.mes))).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const porMes = {}; DB.francos.forEach(x=>{ const k=x.fecha.slice(0,7); porMes[k]=(porMes[k]||0)+1; });
+  return `<h1>Francos compensatorios</h1>
+  <div class="card noprint"><h3 style="margin-top:0">Registrar franco tomado</h3><div class="row">
+    <div><label>Persona</label><select id="fp" onchange="infoF()"><option value="">Elegir…</option>${optPersonas()}</select></div>
+    <div><label>Fecha del franco</label><input type="date" id="ff" value="${hoy()}"></div>
+    <div style="flex:1 1 220px"><label>Observaciones</label><input id="fo" style="width:100%"></div>
+    <button class="btn p" onclick="guardarFranco()">Registrar</button></div><div id="finfo" class="muted" style="margin-top:8px"></div>
+    <p class="muted">También se registran solos al marcar <b>FC</b> en la planilla de asistencia.</p></div>
+  <div class="row noprint" style="margin-bottom:8px">
+    <div><label>Persona</label><select onchange="filtroF.p=this.value;render()"><option value="">Todas</option>${optPersonas(filtroF.p,true)}</select></div>
+    <div><label>Mes</label><input type="month" value="${filtroF.mes}" onchange="filtroF.mes=this.value;render()"></div>
+    <button class="btn" onclick="tablaACSV('#tblF','francos.csv')">Exportar CSV</button><button class="btn" onclick="imprimir()">Imprimir</button></div>
+  ${printHead('Francos compensatorios')}
+  <div class="tbl-wrap"><table class="tbl" id="tblF"><thead><tr><th>Fecha</th><th>Persona</th><th>G</th><th>Observaciones</th><th>Origen</th><th class="noprint"></th></tr></thead>
+  <tbody>${lista.map(x=>{const p=persona(x.personaId); return `<tr><td>${fmt(x.fecha)}</td><td>${h(p?.nombre)}</td><td>${p?.guardia||''}</td><td>${h(x.obs)}${x.forzado?`<br><span class="tag a">Sin saldo – ${h(x.justif)}</span>`:''}</td><td>${x.origen?'Planilla':'Manual'}</td><td class="noprint"><button class="btn s" onclick="borrarFranco('${x.id}')">Eliminar</button></td></tr>`;}).join('') || '<tr><td colspan="6" class="muted">Sin francos.</td></tr>'}</tbody></table></div>
+  <h3>Francos por mes</h3><p>${Object.entries(porMes).sort().reverse().map(([k,v])=>`<span class="tag" style="margin:2px">${MESES[+k.slice(5)-1]} ${k.slice(0,4)}: ${v}</span>`).join('')||'<span class="muted">—</span>'}</p>${printFoot()}`;
+}
+function infoF(){ const p = val('fp'); if (!p) return $('#finfo').innerHTML=''; const s = saldo(p); $('#finfo').innerHTML = `Francos disponibles: <b>${s.disp}</b> · Acumulado: ${minHM(s.min)} · Faltan ${minHM(s.resto)} para el próximo.`; }
+async function guardarFranco(){
+  const pid = val('fp'), f = val('ff'); if (!pid||!f) return alert('Elegí persona y fecha');
+  const s = saldo(pid); let forz=false, just='';
+  if (s.disp < 1){ just = await confirmar(`${nombreP(pid)} no tiene francos disponibles. ¿Registrarlo igual?`, true); if (!just) return; forz = true; }
+  const obs = val('fo'); const k = kAs(pid,f);
+  const enPlanilla = guardiaEn(persona(pid),f)===guardiaDelDia(f) && !DB.asistencia[k];
+  DB.francos.push({id:uid(), personaId:pid, fecha:f, obs, forzado:forz, justif:just, origen: enPlanilla ? k : undefined});
+  if (enPlanilla) DB.asistencia[k] = {cod:'FC', nota:''};
+  save(); render(); toast('Franco registrado','ok');
+}
+async function borrarFranco(id){ if (!(await confirmar('¿Eliminar este franco? Se devuelve al saldo de la persona.'))) return; const x = DB.francos.find(z=>z.id===id); if (x.origen && DB.asistencia[x.origen]?.cod==='FC') delete DB.asistencia[x.origen]; DB.francos = DB.francos.filter(z=>z.id!==id); save(); render(); }
+
+/* =====================================================
+   11. VISTA: LICENCIA ANUAL
+   ===================================================== */
+function vLicencias(){
+  const per = periodos(); if (!UI.licPeriodo || !per.includes(UI.licPeriodo)) UI.licPeriodo = DB.licencias.length ? DB.licencias.map(l=>l.periodo).sort().reverse()[0] : per[0];
+  const tab = UI.licTab;
+  return `<h1>Licencia anual</h1>
+  <div class="tabs noprint">${[['listado','Listado de efectivos'],['calendario','Calendario'],['importar','Importar archivo']].map(([k,t])=>`<button class="${k===tab?'act':''}" onclick="UI.licTab='${k}';render()">${t}</button>`).join('')}</div>
+  ${tab==='listado'?licListado():tab==='calendario'?licCalendario():licImportar()}`;
+}
+let filtroL = {g:''};
+function licListado(){
+  const P = UI.licPeriodo;
+  const ls = DB.licencias.filter(l=>l.periodo===P && (!filtroL.g || persona(l.personaId)?.guardia===filtroL.g)).sort((a,b)=>nombreP(a.personaId).localeCompare(nombreP(b.personaId)));
+  const maxF = Math.max(2, ...ls.map(l=>l.franjas.length));
+  const sinLic = activos().filter(p=>(!filtroL.g||p.guardia===filtroL.g) && !DB.licencias.some(l=>l.periodo===P&&l.personaId===p.id));
+  return `<div class="card noprint"><div class="row">
+    <div><label>Período</label><select onchange="UI.licPeriodo=this.value;render()">${periodos().map(x=>`<option ${x===P?'selected':''}>${x}</option>`).join('')}</select></div>
+    <div><label>Guardia</label><select onchange="filtroL.g=this.value;render()">${optG(filtroL.g,'Todas')}</select></div>
+    <button class="btn p" onclick="editarLic()">+ Cargar licencia</button>
+    <button class="btn" onclick="nuevoPeriodo()">Nuevo período</button>
+    <button class="btn" onclick="tablaACSV('#tblL','licencias_${P}.csv')">Exportar CSV</button>
+    <button class="btn d" onclick="imprimir()">Imprimir listado</button></div></div>
+  ${printHead('Cronograma de Licencia Anual – Período '+P)}
+  <h2>LISTADO DE EFECTIVOS <span class="muted">– Período ${h(P)}${filtroL.g?' – Guardia '+filtroL.g:''}</span></h2>
+  <div class="tbl-wrap"><table class="tbl" id="tblL"><thead><tr><th>Apellido y nombre</th><th>G</th><th class="num">Días disponibles</th><th class="num">Días usados</th><th class="num">Días restantes</th>${Array.from({length:maxF},(_,i)=>`<th>${i+1}.ª franja (inicio - fin)</th>`).join('')}<th class="noprint"></th></tr></thead>
+  <tbody>${ls.map(l=>{ const c = licDe(l); const al = alertasLic(l); return `<tr><td><button class="btn lnk" onclick="ficha('${l.personaId}')">${h(nombreP(l.personaId))}</button>${al.length?`<br><span class="tag a" title="${h(al.join('\n'))}">⚠ ${al.length} aviso(s)</span>`:''}</td><td>${persona(l.personaId)?.guardia||''}</td><td class="num">${l.disponibles}</td><td class="num">${c.usados}</td><td class="num"><b class="${c.restantes<0?'tag r':''}">${c.restantes}</b></td>
+    ${Array.from({length:maxF},(_,i)=>`<td>${l.franjas[i]?`${fmt(l.franjas[i].desde)} - ${fmt(l.franjas[i].hasta)} <span class="muted">(${habiles(l.franjas[i].desde,l.franjas[i].hasta)} d)</span>`:'—'}</td>`).join('')}
+    <td class="noprint"><button class="btn s" onclick="editarLic('${l.id}')">Editar</button></td></tr>`; }).join('') || `<tr><td colspan="${6+maxF}" class="muted">No hay licencias cargadas para este período. Podés cargarlas a mano o importarlas.</td></tr>`}</tbody></table></div>
+  ${sinLic.length?`<p class="muted noprint">Sin licencia cargada en este período (${sinLic.length}): ${sinLic.map(p=>h(p.nombre)).join(', ')}</p>`:''}
+  <p class="muted">Días contados como hábiles (lunes a viernes sin feriados). Los feriados se editan en Configuración.</p>${printFoot()}`;
+}
+function nuevoPeriodo(){ const y = new Date().getFullYear(); const p = prompt('Período (ej.: 2027-2028)', `${y+1}-${y+2}`); if (p && /^\d{4}-\d{4}$/.test(p.trim())){ UI.licPeriodo = p.trim(); DB.config.periodosExtra = [...new Set([...(DB.config.periodosExtra||[]), UI.licPeriodo])]; save(); render(); } else if (p) alert('Usá el formato 2027-2028'); }
+function alertasLic(l){
+  const out = []; const fs = l.franjas;
+  fs.forEach((f,i)=>{
+    if (f.hasta < f.desde) out.push(`Franja ${i+1}: la fecha de fin es anterior al inicio`);
+    fs.forEach((g,j)=>{ if (j>i && f.desde<=g.hasta && g.desde<=f.hasta) out.push(`Las franjas ${i+1} y ${j+1} se superponen`); });
+    DB.licencias.filter(o=>o.id!==l.id && o.personaId===l.personaId).forEach(o=>o.franjas.forEach(g=>{ if (f.desde<=g.hasta && g.desde<=f.hasta) out.push(`Se superpone con otra licencia (${o.periodo})`); }));
+    DB.francos.filter(x=>x.personaId===l.personaId && inRange(x.fecha,f.desde,f.hasta)).forEach(x=>out.push(`Tiene un franco el ${fmt(x.fecha)} dentro de la franja ${i+1}`));
+    DB.carpetas.filter(c=>c.personaId===l.personaId && c.inicio<=f.hasta && finCarpeta(c)>=f.desde).forEach(c=>out.push(`Tiene carpeta médica (${fmt(c.inicio)}) dentro de la franja ${i+1}`));
+  });
+  const c = licDe(l); if (c.restantes < 0) out.push(`Usa ${-c.restantes} días más de los disponibles`);
+  return out;
+}
+function editarLic(id, periodo, pre){
+  const l = id ? JSON.parse(JSON.stringify(DB.licencias.find(x=>x.id===id))) : {id:'', personaId:pre?.personaId||'', periodo: periodo||UI.licPeriodo, disponibles: 20, franjas:[{desde:'',hasta:''}], obs:''};
+  window._lic = l;
+  modal(`<h2>${id?'Editar':'Cargar'} licencia anual</h2><div class="grid g2">
+    <div class="f"><label>Persona *</label><select id="lp" onchange="_lic.personaId=this.value;licCalc()"><option value="">Elegir…</option>${optPersonas(l.personaId,true)}</select></div>
+    <div class="f"><label>Período</label><input id="lpe" value="${h(l.periodo)}" placeholder="2026-2027"></div>
+    <div class="f"><label>Días disponibles (le corresponden)</label><input type="number" id="ldi" value="${l.disponibles}" oninput="_lic.disponibles=+this.value;licCalc()"></div>
+    <div class="f"><label>Resumen</label><div id="lres" style="font-weight:700;padding-top:6px"></div></div></div>
+  <h3>Franjas</h3><div id="lfr"></div><button class="btn s" onclick="_lic.franjas.push({desde:'',hasta:''});licFranjas()">+ Agregar franja</button>
+  <div id="lal" style="margin-top:10px"></div>
+  <div class="f"><label>Observaciones</label><input id="lob" value="${h(l.obs||'')}"></div>
+  <div class="acc">${id?`<button class="btn" style="margin-right:auto" onclick="borrarLic('${id}')">Eliminar</button>`:''}<button class="btn" onclick="cerrarModal()">Cancelar</button><button class="btn p" onclick="guardarLic()">Guardar</button></div>`);
+  licFranjas();
+}
+function licFranjas(){ $('#lfr').innerHTML = _lic.franjas.map((f,i)=>`<div class="row" style="margin-bottom:6px"><b>${i+1}.ª</b><input type="date" value="${f.desde}" onchange="_lic.franjas[${i}].desde=this.value;licCalc()"> a <input type="date" value="${f.hasta}" onchange="_lic.franjas[${i}].hasta=this.value;licCalc()"><span id="lfd${i}" class="muted"></span><button class="btn s" onclick="_lic.franjas.splice(${i},1);licFranjas()">Quitar</button></div>`).join(''); licCalc(); }
+function licCalc(){
+  const l = {..._lic, franjas:_lic.franjas.filter(f=>f.desde&&f.hasta)}; const c = licDe(l);
+  _lic.franjas.forEach((f,i)=>{ const e=$('#lfd'+i); if (e) e.textContent = f.desde&&f.hasta ? habiles(f.desde,f.hasta)+' días hábiles' : ''; });
+  $('#lres').innerHTML = `${c.usados} usados · <span style="color:${c.restantes<0?'#b91c1c':'#15803d'}">${c.restantes} restantes</span>`;
+  const al = l.personaId ? alertasLic(l) : []; $('#lal').innerHTML = al.length ? `<div class="warn">${al.map(h).join('<br>')}</div>` : '';
+}
+function guardarLic(){
+  const l = _lic; l.personaId = val('lp'); l.periodo = val('lpe').trim(); l.disponibles = +val('ldi')||0; l.obs = val('lob'); l.franjas = l.franjas.filter(f=>f.desde&&f.hasta);
+  if (!l.personaId || !l.periodo) return alert('Completá persona y período');
+  if (l.id){ const i = DB.licencias.findIndex(x=>x.id===l.id); DB.licencias[i] = l; } else { const ex = DB.licencias.find(x=>x.personaId===l.personaId && x.periodo===l.periodo); if (ex){ ex.franjas.push(...l.franjas); ex.disponibles = l.disponibles; } else { l.id = uid(); DB.licencias.push(l); } }
+  UI.licPeriodo = l.periodo; save(); cerrarModal(); render(); toast('Licencia guardada','ok');
+}
+async function borrarLic(id){ if (!(await confirmar('¿Eliminar esta licencia?'))) return; DB.licencias = DB.licencias.filter(x=>x.id!==id); save(); cerrarModal(); render(); }
+function licCalendario(){
+  if (!UI.calMes) UI.calMes = hoy().slice(0,7);
+  const [y,m] = UI.calMes.split('-').map(Number); const nd = new Date(Date.UTC(y,m,0)).getUTCDate();
+  const dias = Array.from({length:nd},(_,i)=>`${UI.calMes}-${String(i+1).padStart(2,'0')}`);
+  const g = UI.calG, fer = feriadoSet(), mx = +DB.config.maxLicencia||0;
+  const ps = DB.personal.filter(p=>p.guardia===g && DB.licencias.some(l=>l.personaId===p.id && l.franjas.some(f=>f.desde<=dias[nd-1] && f.hasta>=dias[0])));
+  const cnt = dias.map(d=>ps.filter(p=>licenciaEn(p.id,d)).length);
+  return `<div class="card noprint"><div class="row">
+    <div><label>Mes</label><input type="month" value="${UI.calMes}" onchange="UI.calMes=this.value;render()"></div>
+    <div><label>Guardia</label><select onchange="UI.calG=this.value;render()">${optG(g)}</select></div>
+    <button class="btn" onclick="calMover(-1)">◀</button><button class="btn" onclick="calMover(1)">▶</button><button class="btn d" onclick="imprimir()">Imprimir</button></div></div>
+  ${printHead('Calendario de licencias')}
+  <h2>${MESES[m-1]} ${y} – Guardia ${g}</h2>
+  ${cnt.some(c=>c>mx)?`<div class="warn">⚠ Hay días con más de ${mx} personas de licencia al mismo tiempo en la Guardia ${g} (marcados en amarillo).</div>`:''}
+  ${ps.length?`<div class="tbl-wrap"><table class="cal"><thead><tr><th style="text-align:left;padding:0 6px">Persona</th>${dias.map(d=>{const w=D(d).getUTCDay(); return `<th title="${fmt(d)}">${+d.slice(8)}<br>${DIAS_C[w]}</th>`;}).join('')}</tr></thead>
+  <tbody>${ps.map(p=>`<tr><td class="nom">${h(p.nombre)}</td>${dias.map(d=>{const w=D(d).getUTCDay(); return `<td class="${licenciaEn(p.id,d)?'lic':(w===0||w===6||fer.has(d))?'fs':''}"></td>`;}).join('')}</tr>`).join('')}</tbody>
+  <tfoot><tr><td class="nom">De licencia</td>${cnt.map(c=>`<td class="${c>mx?'exc':''}">${c||''}</td>`).join('')}</tr></tfoot></table></div>`:`<p class="muted">Nadie de la Guardia ${g} tiene licencia este mes.</p>`}
+  <p class="muted">Rojo = de licencia · Gris = fin de semana o feriado.</p>${printFoot()}`;
+}
+function calMover(d){ let [y,m] = UI.calMes.split('-').map(Number); m+=d; if(m<1){m=12;y--;} if(m>12){m=1;y++;} UI.calMes = `${y}-${String(m).padStart(2,'0')}`; render(); }
+
+/* ---------- 11.b IMPORTACIÓN DE LICENCIAS ---------- */
+const LIBS = {
+  xlsx: 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js',
+  pdf: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js',
+  pdfWorker: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js',
+  ocr: 'https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js'
+};
+const cargados = {};
+function cargarLib(url){
+  if (cargados[url]) return cargados[url];
+  return cargados[url] = new Promise((res, rej) => { const s = document.createElement('script'); s.src = url; s.onload = res; s.onerror = () => { delete cargados[url]; rej(new Error('No se pudo cargar una librería necesaria. Revisá la conexión a internet (solo hace falta para importar Excel o PDF; los CSV funcionan sin internet).')); }; document.head.appendChild(s); });
+}
+function parseCSV(txt){
+  txt = txt.replace(/^﻿/,''); const pl = txt.split(/\r?\n/)[0] || '';
+  const sep = (pl.match(/;/g)||[]).length >= (pl.match(/,/g)||[]).length ? ';' : (pl.includes('\t')?'\t':',');
+  const rows = []; let r = [], c = '', q = false;
+  for (let i=0;i<txt.length;i++){ const ch = txt[i];
+    if (q){ if (ch==='"'){ if (txt[i+1]==='"'){c+='"';i++;} else q=false; } else c+=ch; }
+    else if (ch==='"') q = true; else if (ch===sep){ r.push(c); c=''; } else if (ch==='\n'){ r.push(c.replace(/\r$/,'')); rows.push(r); r=[]; c=''; } else c+=ch; }
+  if (c || r.length){ r.push(c); rows.push(r); }
+  return rows.filter(r=>r.some(x=>String(x).trim()));
+}
+async function leerTabla(file){
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext==='csv' || ext==='txt') return parseCSV(await file.text());
+  await cargarLib(LIBS.xlsx);
+  const wb = XLSX.read(await file.arrayBuffer(), {type:'array', cellDates:false});
+  return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true, defval:''}).filter(r=>r.some(x=>String(x).trim()));
+}
+function licImportar(){
+  const ultima = DB.importaciones[DB.importaciones.length-1];
+  return `<div class="card noprint"><div class="row">
+    <div><label>Período al que corresponde</label><input id="impPer" value="${h(UI.licPeriodo)}" style="width:140px"></div>
+    <button class="btn" onclick="planillaModelo()">Descargar planilla modelo</button>
+    ${ultima && !ultima.deshecha?`<button class="btn" onclick="deshacerImport()">Deshacer última importación</button>`:''}</div>
+    <div class="dz" id="dz" style="margin-top:12px" onclick="$('#fimp').click()"><div style="font-size:40px">📄</div><b>Arrastrá el archivo acá o hacé clic para elegirlo</b><div class="muted">Excel (.xlsx/.xls), CSV o PDF. Nada se guarda hasta que confirmes en la vista previa.</div><input type="file" id="fimp" accept=".xlsx,.xls,.csv,.pdf" style="display:none"></div>
+    <div id="impEstado" style="margin-top:10px"></div>
+    <p class="muted">Consejo: el CSV es el formato más confiable y funciona sin internet. Los PDF impresos como imagen (por ejemplo, con "Microsoft Print to PDF") se leen con reconocimiento de texto (OCR), que tarda más y puede equivocarse: revisá siempre la vista previa.</p></div>
+  <h3>Historial de importaciones</h3>
+  <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Archivo</th><th>Período</th><th class="num">Registros</th><th>Estado</th></tr></thead><tbody>
+  ${DB.importaciones.slice().reverse().map(i=>`<tr><td>${new Date(i.fecha).toLocaleString('es-AR')}</td><td>${h(i.archivo)}</td><td>${h(i.periodo)}</td><td class="num">${i.cantidad}</td><td>${i.deshecha?'<span class="tag">Deshecha</span>':`<span class="tag v">${i.creadas.length} nuevas · ${i.actualizadas.length} actualizadas</span>`}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Todavía no se importó nada.</td></tr>'}</tbody></table></div>`;
+}
+function initDropzone(){
+  const dz = $('#dz'), fi = $('#fimp'); if (!dz) return;
+  fi.onchange = () => fi.files[0] && procesarArchivo(fi.files[0]);
+  dz.ondragover = e => { e.preventDefault(); dz.classList.add('on'); };
+  dz.ondragleave = () => dz.classList.remove('on');
+  dz.ondrop = e => { e.preventDefault(); dz.classList.remove('on'); if (e.dataTransfer.files[0]) procesarArchivo(e.dataTransfer.files[0]); };
+}
+const estadoImp = (html) => { const e = $('#impEstado'); if (e) e.innerHTML = html; };
+async function procesarArchivo(file){
+  const periodo = val('impPer').trim() || UI.licPeriodo;
+  const ext = file.name.split('.').pop().toLowerCase();
+  try{
+    if (ext==='pdf'){ estadoImp('<div class="warn">Leyendo PDF…</div>'); const filas = await leerPDF(file); vistaPrevia(filas, file.name, periodo); }
+    else { estadoImp('<div class="warn">Leyendo archivo…</div>'); const t = await leerTabla(file); mapeoColumnas(t, file.name, periodo); }
+  }catch(e){ console.error(e); estadoImp(`<div class="err">${h(e.message)}</div>`); }
+}
+// --- Reconocimiento de columnas ---
+const ROLES = [
+  ['', '(ignorar)'], ['nombre','Apellido y nombre'], ['dni','DNI / Legajo'], ['disp','Días disponibles'], ['usados','Días usados'], ['rest','Días restantes'],
+  ['franja','Franja (inicio - fin)'], ['desde','Fecha desde'], ['hasta','Fecha hasta'], ['periodo','Período / Año']
+];
+function rolDe(enc){
+  const e = norm(enc);
+  if (!e) return '';
+  if (/franja|periodo de licencia|fechas/.test(e)){
+    if (/desde/.test(e) || (/inicio/.test(e) && !/fin/.test(e))) return 'desde';
+    if (/hasta/.test(e) || (/fin/.test(e) && !/inicio/.test(e))) return 'hasta';
+    return 'franja';
+  }
+  if (/^(desde|inicio|fecha desde|fecha inicio)/.test(e) || /desde/.test(e)) return 'desde';
+  if (/^(hasta|fin|fecha hasta|fecha fin)/.test(e) || /hasta/.test(e)) return 'hasta';
+  if (/apellido|nombre|agente|efectivo/.test(e)) return 'nombre';
+  if (/dni|legajo|documento/.test(e)) return 'dni';
+  if (/restante|pendiente|saldo/.test(e)) return 'rest';
+  if (/usad|tomad|gozad/.test(e)) return 'usados';
+  if (/disponible|corresponde|dias|total/.test(e)) return 'disp';
+  if (/ano|periodo/.test(e)) return 'periodo';
+  return '';
+}
+function mapeoColumnas(tabla, archivo, periodo){
+  let hi = tabla.slice(0,15).findIndex(r => r.filter(c=>rolDe(c)).length >= 2); if (hi < 0) hi = 0;
+  const enc = tabla[hi].map(String); const roles = enc.map(rolDe);
+  window._map = {tabla, hi, archivo, periodo};
+  estadoImp(`<div class="card"><h3 style="margin-top:0">Columnas encontradas en "${h(archivo)}"</h3><p class="muted">Revisá qué es cada columna. Si alguna no se reconoció, elegila en la lista.</p>
+  <div class="tbl-wrap"><table class="tbl"><tr>${enc.map((e,i)=>`<th>${h(e)||'(sin título)'}<br><select id="map${i}" style="font-size:13px;padding:3px">${ROLES.map(([k,t])=>`<option value="${k}" ${k===roles[i]?'selected':''}>${t}</option>`).join('')}</select></th>`).join('')}</tr>
+  ${tabla.slice(hi+1, hi+4).map(r=>`<tr>${enc.map((_,i)=>`<td>${h(r[i])}</td>`).join('')}</tr>`).join('')}</table></div>
+  <button class="btn p" style="margin-top:10px" onclick="aplicarMapeo()">Continuar a la vista previa</button></div>`);
+}
+function aplicarMapeo(){
+  const {tabla, hi, archivo, periodo} = _map; const n = tabla[hi].length;
+  const roles = Array.from({length:n},(_,i)=>val('map'+i));
+  if (!roles.includes('nombre')) return alert('Indicá cuál es la columna de apellido y nombre');
+  const filas = [];
+  for (const r of tabla.slice(hi+1)){
+    const o = {nombre:'', dni:'', disp:null, usados:null, rest:null, franjas:[], periodo:''}; const ds=[], hs=[];
+    roles.forEach((rol,i)=>{ const v = r[i];
+      if (rol==='nombre') o.nombre += ' ' + String(v||'');
+      else if (rol==='dni') o.dni = String(v||'').trim();
+      else if (['disp','usados','rest'].includes(rol)){ const x = parseFloat(String(v).replace(',','.')); if (!isNaN(x)) o[rol] = x; }
+      else if (rol==='franja') o.franjas.push(...franjasDeTexto(v));
+      else if (rol==='desde') ds.push(parseFecha(v)); else if (rol==='hasta') hs.push(parseFecha(v));
+      else if (rol==='periodo') o.periodo = String(v||'').trim();
+    });
+    ds.forEach((d,i)=>{ if (d && hs[i]) o.franjas.push({desde:d, hasta:hs[i]}); });
+    o.nombre = o.nombre.replace(/\s+/g,' ').trim();
+    if (!o.nombre || /apellido|nombre/i.test(o.nombre) && o.disp==null) continue;
+    filas.push(o);
+  }
+  vistaPrevia(filas, archivo, periodo);
+}
+function franjasDeTexto(t){
+  if (typeof t === 'number') return [];
+  const fs = (String(t||'').match(/\d{1,2}\s*[\/\-.]\s*\d{1,2}\s*[\/\-.]\s*\d{2,4}/g) || []).map(x=>parseFecha(x.replace(/\s/g,''))).filter(Boolean);
+  const out = []; for (let i=0;i+1<fs.length;i+=2) out.push({desde:fs[i], hasta:fs[i+1]}); return out;
+}
+// --- Lectura de PDF (texto o, si es imagen, OCR) ---
+async function leerPDF(file){
+  await cargarLib(LIBS.pdf); pdfjsLib.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+  const pdf = await pdfjsLib.getDocument({data: await file.arrayBuffer()}).promise;
+  let palabras = [], texto = 0;
+  for (let n=1; n<=pdf.numPages; n++){
+    const pg = await pdf.getPage(n); const vp = pg.getViewport({scale:1}); const tc = await pg.getTextContent();
+    tc.items.forEach(it => { if (!it.str.trim()) return; texto += it.str.trim().length; palabras.push({t:it.str, x:it.transform[4], y:vp.height - it.transform[5], w:it.width, page:n, W:vp.width}); });
+  }
+  let ocr = false;
+  if (texto < 40){
+    const ok = await confirmar(`El PDF "${file.name}" no tiene texto (es una imagen). ¿Leerlo con reconocimiento de texto (OCR)? Puede tardar 1 o 2 minutos y necesita internet la primera vez.`);
+    if (!ok) throw new Error('Importación cancelada. Si podés, exportá el cronograma a Excel o CSV.');
+    palabras = await ocrPDF(pdf); ocr = true;
+  }
+  const filas = filasDesdePalabras(palabras);
+  filas.forEach(f=>f.ocr = ocr);
+  if (!filas.length) throw new Error('No encontré filas de licencias en el PDF. Probá exportarlo a Excel o CSV.');
+  return filas;
+}
+async function ocrPDF(pdf){
+  await cargarLib(LIBS.ocr);
+  const worker = await Tesseract.createWorker('spa', 1, { logger: m => { if (m.status==='recognizing text') estadoImp(`<div class="warn">Reconociendo texto (OCR)… página ${window._ocrPag||1} de ${pdf.numPages}: ${Math.round(m.progress*100)}%</div>`); } });
+  await worker.setParameters({ preserve_interword_spaces: '1' });
+  const palabras = [];
+  for (let n=1; n<=pdf.numPages; n++){
+    window._ocrPag = n;
+    const pg = await pdf.getPage(n); const vp = pg.getViewport({scale:2.5});
+    const cv = document.createElement('canvas'); cv.width = vp.width; cv.height = vp.height;
+    await pg.render({canvasContext: cv.getContext('2d'), viewport: vp}).promise;
+    const {data} = await worker.recognize(cv);
+    (data.words||[]).forEach(w => { if (w.text.trim()) palabras.push({t:w.text, x:w.bbox.x0, y:(w.bbox.y0+w.bbox.y1)/2, w:w.bbox.x1-w.bbox.x0, page:n, W:vp.width}); });
+  }
+  await worker.terminate();
+  return palabras;
+}
+/* Reconstruye la tabla a partir de la posición de cada palabra:
+   1) ubica los encabezados (DISPONIBLES, USADOS, RESTANTES, FRANJA) para saber dónde empieza cada columna;
+   2) cada número en la columna "Días disponibles" marca una fila;
+   3) cada palabra se asigna a la fila más cercana y a su columna. Así se arman nombres y fechas cortados en dos renglones. */
+function filasDesdePalabras(ws){
+  const pags = [...new Set(ws.map(w=>w.page))].sort((a,b)=>a-b);
+  let cols = null; const filas = [];
+  for (const pg of pags){
+    const P = ws.filter(w=>w.page===pg);
+    const fh = re => P.filter(w=>re.test(norm(w.t)));
+    const disp = fh(/disponible/)[0], us = fh(/usado/)[0], re = fh(/restante/)[0], fr = fh(/franja/).sort((a,b)=>a.x-b.x);
+    let headY = -Infinity;
+    if (disp && us && re){
+      const W = P[0].W, tol = W*0.015;
+      // Las fechas empiezan donde dice "1ª"/"2ª", un poco antes de la palabra FRANJA
+      const c3 = fr[0] ? Math.max(re.x + W*0.05, fr[0].x - W*0.04) : re.x + W*0.1;
+      const c4 = fr[1] ? fr[1].x - W*0.04 : W;
+      cols = [disp.x-tol, us.x-tol, re.x-tol, c3, c4];
+      headY = Math.max(disp.y, us.y, re.y, ...(fr.map(f=>f.y)));
+    }
+    if (!cols) continue;
+    const colDe = w => { let c = 0; cols.forEach((x,i)=>{ if (w.x >= x) c = i+1; }); return c; }; // 0 nombre,1 disp,2 usados,3 rest,4 franja1,5 franja2
+    const cuerpo = P.filter(w=>w.y > headY + 2 && !/^(apellido|nombre|dias|y|\(inicio|inicio|fin\)|-?\s*fin\)?)$/.test(norm(w.t)) && !/^file|cronograma|listado de efectivos/i.test(w.t));
+    const anclas = cuerpo.filter(w=>colDe(w)===1 && /^\d{1,3}$/.test(w.t.trim())).sort((a,b)=>a.y-b.y);
+    if (!anclas.length) continue;
+    const esp = anclas.length>1 ? anclas.slice(1).map((a,i)=>a.y-anclas[i].y).sort((a,b)=>a-b)[Math.floor((anclas.length-1)/2)] : 60;
+    const grupos = anclas.map(a=>({a, ws:[]}));
+    cuerpo.forEach(w => { let best=null, bd=Infinity; grupos.forEach(g=>{ const d=Math.abs(w.y-g.a.y); if (d<bd){bd=d;best=g;} }); if (best && bd <= esp*0.62) best.ws.push(w); });
+    for (const g of grupos){
+      const por = [[],[],[],[],[],[]]; g.ws.forEach(w=>por[colDe(w)].push(w));
+      const txt = arr => arr.sort((a,b)=> (Math.abs(a.y-b.y)<6 ? a.x-b.x : a.y-b.y)).map(w=>w.t).join(' ');
+      const num = arr => { const m = txt(arr).match(/\d{1,3}/); return m ? +m[0] : null; };
+      // limpia el nombre: solo letras, y quita letras sueltas que deja el OCR al principio o al final
+      const nombre = txt(por[0]).replace(/[^A-Za-zÁÉÍÓÚÜÑáéíóúüñ' ]/g,' ').replace(/\s+/g,' ').trim().replace(/^(\S\s)+/,'').replace(/(\s\S)+$/,'');
+      if (!nombre) continue;
+      filas.push({ nombre, dni:'', disp: num(por[1]), usados: num(por[2]), rest: num(por[3]), franjas: [...franjasDeTexto(txt(por[4])), ...franjasDeTexto(txt(por[5]))], periodo:'' });
+    }
+  }
+  if (!filas.length){ // Plan B: buscar renglones con el patrón nombre + 3 números + fechas
+    const lineas = {}; ws.forEach(w=>{ const k = w.page+'_'+Math.round(w.y/8); (lineas[k]=lineas[k]||[]).push(w); });
+    Object.values(lineas).forEach(l=>{ const t = l.sort((a,b)=>a.x-b.x).map(w=>w.t).join(' ');
+      const m = t.match(/^([A-Za-zÁÉÍÓÚÑáéíóúñ' .]+?)\s+(\d{1,3})\s+(\d{1,3})\s+(\d{1,3})\s+(.*)$/);
+      if (m) filas.push({nombre:m[1].trim(), dni:'', disp:+m[2], usados:+m[3], rest:+m[4], franjas:franjasDeTexto(m[5]), periodo:''}); });
+  }
+  return filas;
+}
+// --- Cruce con el personal ---
+const claveNombre = s => norm(s).split(' ').filter(Boolean).sort().join(' ');
+function lev(a,b){ const m=a.length,n=b.length; if(!m)return n; if(!n)return m; let p=Array.from({length:n+1},(_,i)=>i); for(let i=1;i<=m;i++){ const c=[i]; for(let j=1;j<=n;j++) c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1)); p=c; } return p[n]; }
+function cruzar(o){
+  if (o.dni){ const p = DB.personal.find(p=>p.dni && norm(p.dni)===norm(o.dni)); if (p) return {estado:'ok', pid:p.id}; }
+  const k = claveNombre(o.nombre);
+  const ex = DB.personal.filter(p=>claveNombre(p.nombre)===k);
+  if (ex.length===1) return {estado:'ok', pid:ex[0].id};
+  const tk = k.split(' ');
+  const cands = DB.personal.map(p=>{
+    const pk = claveNombre(p.nombre).split(' ');
+    let hit = 0; tk.forEach(t=>{ if (pk.some(x=>x===t || (t.length>=1 && x.startsWith(t)) || (x.length>=1 && t.startsWith(x)) || (t.length>3 && x.length>3 && lev(t,x)<=1))) hit++; });
+    const sc = hit / Math.max(tk.length, pk.length);
+    return {p, sc};
+  }).filter(c=>c.sc>=0.5).sort((a,b)=>b.sc-a.sc);
+  if (cands.length) return {estado:'posible', pid:cands[0].p.id, cands:cands.slice(0,4).map(c=>c.p.id)};
+  return {estado:'no', pid:''};
+}
+function vistaPrevia(filas, archivo, periodo){
+  const items = filas.map((o,i)=>{
+    const c = cruzar(o);
+    const it = {...o, i, ...c, accion: c.estado==='no'?'nueva':'importar', guardia: 'A', periodo: o.periodo || periodo};
+    return it;
+  });
+  window._imp = {items, archivo, periodo};
+  dibujarPrevia();
+}
+function chequeos(it){
+  const fer = feriadoSet(); const out = [];
+  const calc = it.franjas.reduce((s,f)=>s+habiles(f.desde,f.hasta,fer),0); it.calc = calc;
+  if (it.disp==null) out.push('Falta días disponibles');
+  if (it.disp!=null && it.usados!=null && it.rest!=null && it.usados + it.rest !== it.disp) out.push(`Usados + restantes (${it.usados+it.rest}) ≠ disponibles (${it.disp})`);
+  if (it.usados!=null && calc !== it.usados) out.push(`Las franjas suman ${calc} días hábiles y el archivo dice ${it.usados} usados`);
+  it.franjas.forEach((f,j)=>{ if (!f.desde||!f.hasta) out.push(`Franja ${j+1} con fecha inválida`); else if (f.hasta<f.desde) out.push(`Franja ${j+1}: el fin es anterior al inicio`); });
+  if (!it.franjas.length) out.push('Sin franjas de licencia');
+  return out;
+}
+function dibujarPrevia(){
+  const {items, archivo} = _imp; let v=0,a=0,r=0;
+  const filas = items.map((it, idx) => {
+    const ch = chequeos(it);
+    const prev = items.slice(0,idx).find(x=>x.pid && x.pid===it.pid && x.accion==='importar');
+    let col = it.accion==='descartar' ? '' : (it.accion==='nueva' || !it.pid) ? 'r' : (it.estado==='posible' || ch.length || it.ocr) ? 'a' : 'v';
+    if (it.accion==='nueva' && it.nombre) col = 'r';
+    if (col==='v') v++; else if (col==='a') a++; else if (col==='r') r++;
+    const est = {v:'✅ OK', a:'⚠️ Revisar', r:'❌ No encontrada', '':'Descartada'}[col];
+    const notas = [...(it.estado==='posible'&&it.accion==='importar'?['Posible coincidencia: confirmá la persona']:[]), ...(it.ocr?['Leído por OCR']:[]), ...(prev?['Continuación de la fila anterior de la misma persona (se suma a su licencia)']:[]), ...ch];
+    return `<tr style="background:${{v:'#f0fdf4',a:'#fefce8',r:'#fef2f2','':'#f3f4f6'}[col]}">
+      <td><span class="tag ${col}">${est}</span></td>
+      <td><b>${h(it.nombre)}</b>${it.dni?`<br><small>${h(it.dni)}</small>`:''}</td>
+      <td><select onchange="impSet(${idx},'sel',this.value)" style="max-width:260px">
+        <option value="__nueva" ${it.accion==='nueva'?'selected':''}>➕ Dar de alta como nueva</option>
+        <option value="__desc" ${it.accion==='descartar'?'selected':''}>🗑 Descartar fila</option>
+        ${(it.cands||[]).length?`<optgroup label="Posibles coincidencias">${it.cands.map(id=>`<option value="${id}" ${it.accion==='importar'&&it.pid===id?'selected':''}>${h(nombreP(id))}</option>`).join('')}</optgroup>`:''}
+        <optgroup label="Todo el personal">${DB.personal.slice().sort((x,y)=>x.nombre.localeCompare(y.nombre)).map(p=>`<option value="${p.id}" ${it.accion==='importar'&&it.pid===p.id&&!(it.cands||[]).includes(p.id)?'selected':''}>${h(p.nombre)} (Guardia ${p.guardia})</option>`).join('')}</optgroup></select>
+        ${it.accion==='nueva'?`<br><select onchange="impSet(${idx},'guardia',this.value)" style="margin-top:4px">${optG(it.guardia)}</select>`:''}</td>
+      <td><input type="number" style="width:70px" value="${it.disp??''}" onchange="impSet(${idx},'disp',this.value)"></td>
+      <td class="num">${it.usados??'—'} / <b>${it.calc}</b></td>
+      <td class="num">${it.rest??'—'}</td>
+      <td><input style="width:250px" value="${h(it.franjas.map(f=>`${fmt(f.desde)} - ${fmt(f.hasta)}`).join('; '))}" onchange="impSet(${idx},'franjas',this.value)"></td>
+      <td style="font-size:13px">${notas.map(h).join('<br>')}</td></tr>`;
+  }).join('');
+  estadoImp(`<div class="card"><h3 style="margin-top:0">Vista previa – ${h(archivo)} (período ${h(_imp.periodo)})</h3>
+  <p><span class="tag v">✅ ${v} correctas</span> <span class="tag a">⚠️ ${a} para revisar</span> <span class="tag r">❌ ${r} no encontradas</span></p>
+  <p class="muted">Podés corregir la persona, los días o las franjas (formato: dd/mm/aaaa - dd/mm/aaaa; separadas con punto y coma). Columna "Usados": lo que dice el archivo / lo que calcula el sistema.</p>
+  <div class="tbl-wrap" style="max-height:65vh"><table class="tbl"><thead><tr><th>Estado</th><th>Leído del archivo</th><th>Persona en el sistema</th><th>Disp.</th><th class="num">Usados</th><th class="num">Rest.</th><th>Franjas</th><th>Observaciones</th></tr></thead><tbody>${filas}</tbody></table></div>
+  <div class="acc"><button class="btn" onclick="estadoImp('')">Cancelar</button><button class="btn p" onclick="confirmarImport()">Confirmar importación</button></div></div>`);
+}
+function impSet(idx, k, v){
+  const it = _imp.items[idx];
+  if (k==='sel'){ if (v==='__nueva'){ it.accion='nueva'; it.pid=''; } else if (v==='__desc'){ it.accion='descartar'; } else { it.accion='importar'; it.pid=v; it.estado='ok'; } }
+  else if (k==='disp') it.disp = v===''?null:+v;
+  else if (k==='guardia') it.guardia = v;
+  else if (k==='franjas') it.franjas = franjasDeTexto(v);
+  dibujarPrevia();
+}
+async function confirmarImport(){
+  const {items, archivo, periodo} = _imp;
+  const reg = {id:uid(), fecha:new Date().toISOString(), archivo, periodo, cantidad:0, creadas:[], actualizadas:[], personas:[]};
+  let desc = 0;
+  // 1) altas nuevas
+  items.forEach(it => { if (it.accion==='nueva'){ const ex = DB.personal.find(p=>claveNombre(p.nombre)===claveNombre(it.nombre)); if (ex) it.pid = ex.id; else { const p = nuevaPersona({nombre:it.nombre, guardia:it.guardia, dni:it.dni}); DB.personal.push(p); reg.personas.push(p.id); it.pid = p.id; } it.accion='importar'; } });
+  // 2) agrupar filas de la misma persona (continuaciones)
+  const grupos = {};
+  items.forEach(it => { if (it.accion!=='importar' || !it.pid){ desc++; return; } const k = it.pid+'|'+it.periodo; if (!grupos[k]) grupos[k] = {pid:it.pid, periodo:it.periodo, disp:it.disp, franjas:[]}; grupos[k].franjas.push(...it.franjas); reg.cantidad++; });
+  // 3) crear o actualizar
+  Object.values(grupos).forEach(g => {
+    const fr = g.franjas.filter(f=>f.desde&&f.hasta);
+    const ex = DB.licencias.find(l=>l.personaId===g.pid && l.periodo===g.periodo);
+    if (ex){ reg.actualizadas.push({id:ex.id, prev:JSON.parse(JSON.stringify(ex))}); ex.franjas = fr; if (g.disp!=null) ex.disponibles = g.disp; }
+    else { const l = {id:uid(), personaId:g.pid, periodo:g.periodo, disponibles:g.disp??0, franjas:fr, obs:'Importado de '+archivo, importId:reg.id}; DB.licencias.push(l); reg.creadas.push(l.id); }
+  });
+  DB.importaciones.push(reg); UI.licPeriodo = periodo; save();
+  const res = `${reg.creadas.length} importados, ${reg.actualizadas.length} actualizados, ${desc} descartados${reg.personas.length?`, ${reg.personas.length} personas nuevas`:''}.`;
+  UI.licTab = 'listado'; render(); toast('Importación terminada: ' + res, 'ok');
+}
+async function deshacerImport(){
+  const r = DB.importaciones.filter(i=>!i.deshecha).pop(); if (!r) return;
+  if (!(await confirmar(`¿Deshacer la importación de "${r.archivo}" del ${new Date(r.fecha).toLocaleString('es-AR')}?`))) return;
+  DB.licencias = DB.licencias.filter(l=>!r.creadas.includes(l.id));
+  r.actualizadas.forEach(u=>{ const i = DB.licencias.findIndex(l=>l.id===u.id); if (i>=0) DB.licencias[i] = u.prev; });
+  DB.personal = DB.personal.filter(p=>!r.personas.includes(p.id) || DB.licencias.some(l=>l.personaId===p.id));
+  r.deshecha = true; save(); render(); toast('Importación deshecha','ok');
+}
+async function planillaModelo(){
+  const enc = ['APELLIDO Y NOMBRE','DNI','GUARDIA','DÍAS DISPONIBLES','DÍAS USADOS','DÍAS RESTANTES','1ª FRANJA (INICIO - FIN)','2ª FRANJA (INICIO - FIN)','3ª FRANJA (INICIO - FIN)'];
+  const ej = ['PEREZ JUAN','30111222','A',20,20,0,'05/01/2027 - 16/01/2027','01/03/2027 - 12/03/2027',''];
+  try{ await cargarLib(LIBS.xlsx); const ws = XLSX.utils.aoa_to_sheet([enc, ej]); ws['!cols'] = enc.map((e,i)=>({wch: i===0?28:i>5?26:14})); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Licencias'); XLSX.writeFile(wb, 'planilla_modelo_licencias.xlsx'); }
+  catch(e){ exportCSV('planilla_modelo_licencias.csv', [enc, ej]); toast('Sin internet: se descargó la planilla modelo en CSV (se abre con Excel).'); }
+}
+
+/* =====================================================
+   12. VISTA: CAPACITACIONES
+   ===================================================== */
+const estadoCap = s => ({asistio:'Asistió', ausente:'Ausente', aprobado:'Aprobado'}[s]||'');
+function vCapacitaciones(){
+  const tab = UI.capTab;
+  const lista = DB.capacitaciones.slice().sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  let cuerpo = '';
+  if (tab==='lista'){
+    cuerpo = `<div class="tbl-wrap"><table class="tbl" id="tblC"><thead><tr><th>Fecha</th><th>Tema</th><th class="num">Horas</th><th>Instructor / institución</th><th>Lugar</th><th>Modalidad</th><th>Certif.</th><th class="num">Asistentes</th><th class="noprint"></th></tr></thead><tbody>
+    ${lista.map(c=>{ const as = Object.values(c.asistentes).filter(s=>s==='asistio'||s==='aprobado').length; return `<tr><td>${fmt(c.fecha)}</td><td><b>${h(c.tema)}</b> ${c.obligatoria?'<span class="tag r">Obligatoria</span>':''}</td><td class="num">${c.horas}</td><td>${h(c.instructor)}</td><td>${h(c.lugar)}</td><td>${h(c.modalidad)}</td><td>${c.certificado?'Sí':'No'}</td><td class="num">${as}</td>
+    <td class="noprint"><button class="btn s" onclick="verCap('${c.id}')">Asistentes</button> <button class="btn s" onclick="editarCap('${c.id}')">Editar</button></td></tr>`; }).join('') || '<tr><td colspan="9" class="muted">Sin capacitaciones.</td></tr>'}</tbody></table></div>`;
+  } else if (tab==='persona'){
+    cuerpo = `<div class="tbl-wrap"><table class="tbl" id="tblC"><thead><tr><th>Persona</th><th>G</th><th class="num">Capacitaciones</th><th class="num">Horas</th><th>Detalle</th></tr></thead><tbody>
+    ${activos().map(p=>{ const cs = lista.filter(c=>['asistio','aprobado'].includes(c.asistentes[p.id])); return `<tr><td>${h(p.nombre)}</td><td>${p.guardia}</td><td class="num">${cs.length}</td><td class="num">${cs.reduce((n,c)=>n+(+c.horas||0),0)}</td><td style="font-size:13px">${cs.map(c=>h(c.tema)).join(', ')}</td></tr>`; }).join('')}</tbody></table></div>`;
+  } else {
+    const obl = [...new Set(lista.filter(c=>c.obligatoria).map(c=>c.tema))];
+    cuerpo = obl.length ? obl.map(t=>{ const hechas = lista.filter(c=>c.tema===t); const falta = activos().filter(p=>!hechas.some(c=>['asistio','aprobado'].includes(c.asistentes[p.id])));
+      return `<div class="card"><h3 style="margin-top:0">${h(t)} <span class="tag ${falta.length?'r':'v'}">${falta.length} sin hacer</span></h3>${GUARDIAS.map(g=>{ const f = falta.filter(p=>p.guardia===g); return f.length?`<p><b>Guardia ${g}:</b> ${f.map(p=>h(p.nombre)).join(', ')}</p>`:''; }).join('') || '<p>Todo el personal la hizo.</p>'}</div>`; }).join('') : '<p class="muted">No hay capacitaciones marcadas como obligatorias.</p>';
+  }
+  return `<h1>Capacitaciones</h1>
+  <div class="row noprint" style="margin-bottom:10px"><button class="btn p" onclick="editarCap()">+ Nueva capacitación</button><button class="btn" onclick="tablaACSV('#tblC','capacitaciones.csv')">Exportar CSV</button><button class="btn" onclick="imprimir()">Imprimir</button></div>
+  <div class="tabs noprint">${[['lista','Todas'],['persona','Por persona'],['oblig','Obligatorias pendientes']].map(([k,t])=>`<button class="${k===tab?'act':''}" onclick="UI.capTab='${k}';render()">${t}</button>`).join('')}</div>
+  ${printHead('Capacitaciones')}${cuerpo}${printFoot()}`;
+}
+function editarCap(id){
+  const c = id ? DB.capacitaciones.find(x=>x.id===id) : {tema:'', fecha:hoy(), horas:2, instructor:'', lugar:'', modalidad:'Presencial', certificado:false, obligatoria:false, asistentes:{}};
+  modal(`<h2>${id?'Editar':'Nueva'} capacitación</h2><div class="grid g2">
+  <div class="f"><label>Nombre o tema *</label><input id="ct" value="${h(c.tema)}"></div><div class="f"><label>Fecha</label><input type="date" id="cf" value="${c.fecha}"></div>
+  <div class="f"><label>Duración (horas)</label><input type="number" step="0.5" id="ch" value="${c.horas}"></div><div class="f"><label>Instructor o institución</label><input id="ci" value="${h(c.instructor)}"></div>
+  <div class="f"><label>Lugar</label><input id="cl" value="${h(c.lugar)}"></div><div class="f"><label>Modalidad</label><select id="cm"><option ${c.modalidad==='Presencial'?'selected':''}>Presencial</option><option ${c.modalidad==='Virtual'?'selected':''}>Virtual</option></select></div></div>
+  <label><input type="checkbox" id="cc" ${c.certificado?'checked':''}> Entrega certificado</label> &nbsp; <label><input type="checkbox" id="co" ${c.obligatoria?'checked':''}> Es obligatoria</label>
+  <div class="acc">${id?`<button class="btn" style="margin-right:auto" onclick="borrarCap('${id}')">Eliminar</button>`:''}<button class="btn" onclick="cerrarModal()">Cancelar</button><button class="btn p" onclick="guardarCap('${id||''}')">Guardar y cargar asistentes</button></div>`);
+}
+function guardarCap(id){
+  if (!val('ct').trim()) return alert('Falta el tema');
+  let c = id ? DB.capacitaciones.find(x=>x.id===id) : null; if (!c){ c = {id:uid(), asistentes:{}}; DB.capacitaciones.push(c); }
+  Object.assign(c, {tema:val('ct').trim(), fecha:val('cf'), horas:+val('ch')||0, instructor:val('ci'), lugar:val('cl'), modalidad:val('cm'), certificado:$('#cc').checked, obligatoria:$('#co').checked});
+  save(); render(); verCap(c.id);
+}
+async function borrarCap(id){ if (!(await confirmar('¿Eliminar esta capacitación?'))) return; DB.capacitaciones = DB.capacitaciones.filter(x=>x.id!==id); save(); cerrarModal(); render(); }
+function verCap(id){
+  const c = DB.capacitaciones.find(x=>x.id===id);
+  document.body.classList.add('modal-print');
+  modal(`${printHead('Asistencia a capacitación')}<h2>${h(c.tema)} – ${fmt(c.fecha)}</h2><p class="muted">${c.horas} h · ${h(c.instructor)} · ${h(c.lugar)} · ${h(c.modalidad)}</p>
+  <div class="row noprint" style="margin-bottom:8px">${GUARDIAS.map(g=>`<button class="btn s" onclick="capGuardia('${id}','${g}')">Toda la Guardia ${g}: Asistió</button>`).join('')}<button class="btn s d" onclick="imprimir()">Imprimir</button></div>
+  <div class="grid g3">${GUARDIAS.map(g=>`<div><h3>Guardia ${g}</h3>${activos().filter(p=>p.guardia===g).map(p=>`<div class="row" style="justify-content:space-between;border-bottom:1px solid #eee;padding:3px 0;align-items:center"><span style="font-size:14px">${h(p.nombre)}</span>
+    <select style="font-size:13px;padding:3px" onchange="capSet('${id}','${p.id}',this.value)"><option value="">—</option>${['asistio','ausente','aprobado'].map(s=>`<option value="${s}" ${c.asistentes[p.id]===s?'selected':''}>${estadoCap(s)}</option>`).join('')}</select></div>`).join('')}</div>`).join('')}</div>
+  ${printFoot()}<div class="acc"><button class="btn p" onclick="cerrarModal();render()">Listo</button></div>`, 'xl');
+}
+function capSet(id, pid, v){ const c = DB.capacitaciones.find(x=>x.id===id); if (v) c.asistentes[pid]=v; else delete c.asistentes[pid]; save(); }
+function capGuardia(id, g){ const c = DB.capacitaciones.find(x=>x.id===id); activos().filter(p=>p.guardia===g).forEach(p=>{ if (!c.asistentes[p.id]) c.asistentes[p.id]='asistio'; }); save(); verCap(id); }
+
+/* =====================================================
+   13. VISTA: CARPETAS MÉDICAS
+   ===================================================== */
+let filtroC = {p:'', anio:''};
+function vCarpetas(){
+  const t = hoy();
+  const act = DB.carpetas.filter(c=>inRange(t,c.inicio,finCarpeta(c)));
+  const lista = DB.carpetas.filter(c=>(!filtroC.p||c.personaId===filtroC.p)&&(!filtroC.anio||c.inicio.startsWith(filtroC.anio))).sort((a,b)=>b.inicio.localeCompare(a.inicio));
+  const y = t.slice(0,4), m = t.slice(0,7);
+  const tot = {}; DB.carpetas.forEach(c=>{ const o = tot[c.personaId] = tot[c.personaId] || {n:0, dm:0, dy:0}; if (c.inicio.startsWith(y)) o.n++; for (let f=c.inicio; f<=finCarpeta(c); f=addD(f,1)){ if (f.startsWith(m)) o.dm++; if (f.startsWith(y)) o.dy++; } });
+  return `<h1>Carpetas médicas</h1>
+  <div class="row noprint" style="margin-bottom:10px"><button class="btn p" onclick="editarCarpeta()">+ Nueva carpeta médica</button>
+    <div><label>Persona</label><select onchange="filtroC.p=this.value;render()"><option value="">Todas</option>${optPersonas(filtroC.p,true)}</select></div>
+    <div><label>Año</label><input style="width:90px" value="${filtroC.anio}" placeholder="Todos" onchange="filtroC.anio=this.value;render()"></div>
+    <button class="btn" onclick="tablaACSV('#tblCM','carpetas_medicas.csv')">Exportar CSV</button><button class="btn" onclick="imprimir()">Imprimir</button></div>
+  <div class="card"><h3 style="margin-top:0">De carpeta médica hoy (${act.length})</h3>${act.length?act.map(c=>`<span class="tag r" style="margin:3px">${h(nombreP(c.personaId))} – vuelve el ${fmt(addD(finCarpeta(c),1))}</span>`).join(''):'<span class="muted">Nadie.</span>'}</div>
+  ${printHead('Carpetas médicas')}
+  <div class="tbl-wrap"><table class="tbl" id="tblCM"><thead><tr><th>Persona</th><th>G</th><th>Desde</th><th>Hasta</th><th>Reincorpora</th><th class="num">Días</th><th>Tipo</th><th>Certificado</th><th>Obs.</th><th class="noprint"></th></tr></thead><tbody>
+  ${lista.map(c=>`<tr><td>${h(nombreP(c.personaId))}</td><td>${persona(c.personaId)?.guardia||''}</td><td>${fmt(c.inicio)}</td><td>${fmt(finCarpeta(c))}</td><td>${fmt(addD(finCarpeta(c),1))}</td><td class="num">${c.dias}</td><td>${h(c.tipo)}</td><td>${c.presento?'<span class="tag v">Presentado</span>':'<span class="tag r">Pendiente</span>'} ${h(c.nroCert)}</td><td>${h(c.obs)}</td><td class="noprint"><button class="btn s" onclick="editarCarpeta('${c.id}')">Editar</button></td></tr>`).join('') || '<tr><td colspan="10" class="muted">Sin registros.</td></tr>'}</tbody></table></div>
+  <h2>Totales por persona</h2><div class="tbl-wrap"><table class="tbl"><thead><tr><th>Persona</th><th class="num">Carpetas ${y}</th><th class="num">Días este mes</th><th class="num">Días ${y}</th></tr></thead><tbody>
+  ${Object.entries(tot).filter(([,o])=>o.dy).sort((a,b)=>b[1].dy-a[1].dy).map(([pid,o])=>`<tr><td>${h(nombreP(pid))}</td><td class="num">${o.n}</td><td class="num">${o.dm}</td><td class="num">${o.dy}</td></tr>`).join('') || '<tr><td colspan="4" class="muted">—</td></tr>'}</tbody></table></div>${printFoot()}`;
+}
+function editarCarpeta(id, pre={}){
+  const c = id ? DB.carpetas.find(x=>x.id===id) : {personaId:pre.personaId||'', inicio:pre.inicio||hoy(), dias:1, tipo:'Enfermedad', nroCert:'', presento:false, obs:''};
+  modal(`<h2>${id?'Editar':'Nueva'} carpeta médica</h2><div class="grid g2">
+  <div class="f"><label>Persona *</label><select id="mp"><option value="">Elegir…</option>${optPersonas(c.personaId,true)}</select></div>
+  <div class="f"><label>Tipo</label><select id="mt">${['Enfermedad','Accidente de trabajo / ART','Familiar enfermo','Otro'].map(t=>`<option ${t===c.tipo?'selected':''}>${t}</option>`).join('')}</select></div>
+  <div class="f"><label>Fecha de inicio</label><input type="date" id="mi" value="${c.inicio}" oninput="mFin()"></div>
+  <div class="f"><label>Cantidad de días</label><input type="number" min="1" id="md" value="${c.dias}" oninput="mFin()"></div>
+  <div class="f"><label>…o fecha de fin</label><input type="date" id="mf" oninput="mDias()"></div>
+  <div class="f"><label>Reincorporación</label><div id="mr" style="font-weight:800;padding-top:6px"></div></div>
+  <div class="f"><label>N.º de certificado</label><input id="mn" value="${h(c.nroCert)}"></div>
+  <div class="f"><label>&nbsp;</label><label><input type="checkbox" id="mpr" ${c.presento?'checked':''}> Presentó el certificado</label></div></div>
+  <div class="f"><label>Observaciones (sin diagnóstico)</label><input id="mo" value="${h(c.obs)}"></div>
+  <div class="acc">${id?`<button class="btn" style="margin-right:auto" onclick="borrarCarpeta('${id}')">Eliminar</button>`:''}<button class="btn" onclick="cerrarModal()">Cancelar</button><button class="btn p" onclick="guardarCarpeta('${id||''}')">Guardar</button></div>`);
+  mFin();
+}
+function mFin(){ const i = val('mi'), d = Math.max(1, +val('md')||1); if (!i) return; const f = addD(i, d-1); $('#mf').value = f; $('#mr').textContent = fmt(addD(f,1)); }
+function mDias(){ const i = val('mi'), f = val('mf'); if (i && f && f>=i){ $('#md').value = diffD(i,f)+1; $('#mr').textContent = fmt(addD(f,1)); } }
+function guardarCarpeta(id){
+  if (!val('mp')) return alert('Elegí la persona');
+  let c = id ? DB.carpetas.find(x=>x.id===id) : null; if (!c){ c = {id:uid()}; DB.carpetas.push(c); }
+  Object.assign(c, {personaId:val('mp'), tipo:val('mt'), inicio:val('mi'), dias:Math.max(1,+val('md')||1), nroCert:val('mn'), presento:$('#mpr').checked, obs:val('mo')});
+  save(); cerrarModal(); render(); toast('Carpeta médica guardada','ok');
+}
+async function borrarCarpeta(id){ if (!(await confirmar('¿Eliminar esta carpeta médica?'))) return; DB.carpetas = DB.carpetas.filter(x=>x.id!==id); save(); cerrarModal(); render(); }
+
+/* =====================================================
+   14. VISTA: REPORTES
+   ===================================================== */
+let filtroR = null;
+function vReportes(){
+  if (!filtroR){ const t = hoy(); filtroR = {desde: t.slice(0,8)+'01', hasta: t, g:'', p:''}; }
+  const {desde, hasta, g, p} = filtroR; const fer = feriadoSet();
+  const ps = DB.personal.filter(x=>(!g||x.guardia===g)&&(!p||x.id===p)&&(x.activo||p)).sort((a,b)=>a.guardia.localeCompare(b.guardia)||a.nombre.localeCompare(b.nombre));
+  const cods = DB.config.codigos.filter(c=>c.sigla!=='—');
+  const filas = ps.map(x => {
+    const as = {}; Object.entries(DB.asistencia).forEach(([k,v])=>{ const [pid,f] = k.split('|'); if (pid===x.id && inRange(f,desde,hasta)) as[v.cod]=(as[v.cod]||0)+1; });
+    const hm = DB.horas.filter(z=>z.personaId===x.id && !z.anulado && inRange(z.fecha,desde,hasta)).reduce((s,z)=>s+z.min,0);
+    const fc = DB.francos.filter(z=>z.personaId===x.id && inRange(z.fecha,desde,hasta)).length;
+    let la = 0; DB.licencias.filter(l=>l.personaId===x.id).forEach(l=>l.franjas.forEach(f=>{ const a = f.desde>desde?f.desde:desde, b = f.hasta<hasta?f.hasta:hasta; la += habiles(a,b,fer); }));
+    let cm = 0; DB.carpetas.filter(c=>c.personaId===x.id).forEach(c=>{ for (let f=c.inicio; f<=finCarpeta(c); f=addD(f,1)) if (inRange(f,desde,hasta)) cm++; });
+    const cp = DB.capacitaciones.filter(c=>inRange(c.fecha,desde,hasta) && ['asistio','aprobado'].includes(c.asistentes[x.id]));
+    return {x, as, hm, fc, la, cm, cpn:cp.length, cph:cp.reduce((n,c)=>n+(+c.horas||0),0), s:saldo(x.id)};
+  });
+  const T = k => filas.reduce((n,f)=>n+(typeof k==='function'?k(f):f[k]),0);
+  return `<h1>Reportes</h1>
+  <div class="card noprint"><div class="row">
+    <div><label>Desde</label><input type="date" value="${desde}" onchange="filtroR.desde=this.value;render()"></div>
+    <div><label>Hasta</label><input type="date" value="${hasta}" onchange="filtroR.hasta=this.value;render()"></div>
+    <div><label>Guardia</label><select onchange="filtroR.g=this.value;render()">${optG(g,'Todas')}</select></div>
+    <div><label>Persona</label><select onchange="filtroR.p=this.value;render()"><option value="">Todas</option>${optPersonas(p,true)}</select></div>
+    <button class="btn" onclick="repMes(0)">Este mes</button><button class="btn" onclick="repMes(-1)">Mes anterior</button>
+    <button class="btn" onclick="tablaACSV('#tblR','reporte_${desde}_${hasta}.csv')">Exportar CSV</button><button class="btn d" onclick="imprimir()">Imprimir</button>
+    ${p?`<button class="btn" onclick="ficha('${p}')">Ficha individual</button>`:''}</div></div>
+  ${printHead(`Reporte del ${fmt(desde)} al ${fmt(hasta)}${g?' – Guardia '+g:''}`)}
+  <h2>Reporte del ${fmt(desde)} al ${fmt(hasta)}${g?' – Guardia '+g:''}${p?' – '+h(nombreP(p)):''}</h2>
+  <div class="grid g4" style="margin-bottom:12px">
+    <div class="stat"><div class="n">${minHM(T('hm'))}</div><div class="l">Horas extras</div></div>
+    <div class="stat v"><div class="n">${T('fc')}</div><div class="l">Francos tomados</div></div>
+    <div class="stat"><div class="n">${T('la')}</div><div class="l">Días hábiles de licencia anual</div></div>
+    <div class="stat r"><div class="n">${T('cm')}</div><div class="l">Días de carpeta médica</div></div>
+    <div class="stat c"><div class="n">${T('cpn')}</div><div class="l">Asistencias a capacitaciones (${T('cph')} h)</div></div>
+  </div>
+  <div class="tbl-wrap"><table class="tbl" id="tblR"><thead><tr><th>Apellido y nombre</th><th>G</th>${cods.map(c=>`<th class="num" title="${h(c.nombre)}">${h(c.sigla)}</th>`).join('')}<th class="num">Horas extras</th><th class="num">Francos tomados</th><th class="num">Francos disp. hoy</th><th class="num">Días LA</th><th class="num">Días CM</th><th class="num">Capacit.</th></tr></thead>
+  <tbody>${filas.map(f=>`<tr><td>${h(f.x.nombre)}</td><td>${f.x.guardia}</td>${cods.map(c=>`<td class="num">${f.as[c.sigla]||''}</td>`).join('')}<td class="num">${f.hm?minHM(f.hm):''}</td><td class="num">${f.fc||''}</td><td class="num">${f.s.disp}</td><td class="num">${f.la||''}</td><td class="num">${f.cm||''}</td><td class="num">${f.cpn?`${f.cpn} (${f.cph} h)`:''}</td></tr>`).join('')}</tbody>
+  <tfoot><tr><td><b>Totales</b></td><td></td>${cods.map(c=>`<td class="num"><b>${T(f=>f.as[c.sigla]||0)||''}</b></td>`).join('')}<td class="num"><b>${minHM(T('hm'))}</b></td><td class="num"><b>${T('fc')}</b></td><td></td><td class="num"><b>${T('la')}</b></td><td class="num"><b>${T('cm')}</b></td><td class="num"><b>${T('cpn')}</b></td></tr></tfoot></table></div>
+  <p class="muted">Las columnas de códigos cuentan lo cargado en la planilla de asistencia dentro del período.</p>${printFoot()}`;
+}
+function repMes(d){ const t = hoy(); let y = +t.slice(0,4), m = +t.slice(5,7)-1+d; if (m<0){m=11;y--;} const ini = `${y}-${String(m+1).padStart(2,'0')}-01`; const fin = iso(new Date(Date.UTC(y,m+1,0))); filtroR.desde = ini; filtroR.hasta = d===0 ? t : fin; render(); }
+
+/* =====================================================
+   15. VISTA: NOVEDADES
+   ===================================================== */
+let filtroN = {g:'', q:''};
+function vNovedades(){
+  const q = norm(filtroN.q);
+  const lista = DB.novedades.filter(n=>(!filtroN.g||n.guardia===filtroN.g)&&(!q||norm(n.texto+' '+nombreP(n.personaId)).includes(q))).sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  return `<h1>Libro de novedades</h1>
+  <div class="card noprint"><div class="grid g4">
+    <div class="f"><label>Fecha</label><input type="date" id="nf" value="${hoy()}"></div>
+    <div class="f"><label>Guardia</label><select id="ng">${optG(guardiaDelDia(hoy())||'A','General')}</select></div>
+    <div class="f"><label>Persona (opcional)</label><select id="np"><option value="">—</option>${optPersonas()}</select></div></div>
+    <div class="f"><label>Novedad</label><textarea id="nt"></textarea></div><button class="btn p" onclick="guardarNovedad()">Guardar novedad</button></div>
+  <div class="row noprint" style="margin-bottom:8px"><div><label>Buscar</label><input value="${h(filtroN.q)}" onchange="filtroN.q=this.value;render()"></div><div><label>Guardia</label><select onchange="filtroN.g=this.value;render()">${optG(filtroN.g,'Todas')}</select></div><button class="btn" onclick="imprimir()">Imprimir</button></div>
+  ${printHead('Libro de novedades')}
+  ${lista.map(n=>`<div class="card"><div class="row" style="justify-content:space-between"><b>${fmt(n.fecha)} ${n.guardia?`– Guardia ${n.guardia}`:'– General'}${n.personaId?` – ${h(nombreP(n.personaId))}`:''}</b><button class="btn s noprint" onclick="borrarNovedad('${n.id}')">Eliminar</button></div><div style="white-space:pre-wrap;margin-top:6px">${h(n.texto)}</div></div>`).join('') || '<p class="muted">Sin novedades.</p>'}${printFoot()}`;
+}
+function guardarNovedad(){ const t = val('nt').trim(); if (!t) return alert('Escribí la novedad'); DB.novedades.push({id:uid(), fecha:val('nf'), guardia:val('ng'), personaId:val('np'), texto:t}); save(); render(); toast('Novedad guardada','ok'); }
+async function borrarNovedad(id){ if (!(await confirmar('¿Eliminar esta novedad?'))) return; DB.novedades = DB.novedades.filter(n=>n.id!==id); save(); render(); }
+
+/* =====================================================
+   16. VISTA: CONFIGURACIÓN Y COPIAS DE SEGURIDAD
+   ===================================================== */
+function vConfig(){
+  const c = DB.config;
+  return `<h1>Configuración</h1>
+  <div class="card"><h2 style="margin-top:0">Copias de seguridad</h2>
+    <p>Los datos se guardan solo en este navegador y en esta computadora. Hacé una copia seguido y guardala en un pendrive o en Drive. ${c.ultimoBackup?`Última copia: <b>${new Date(c.ultimoBackup).toLocaleString('es-AR')}</b>.`:'<b>Todavía no se hizo ninguna copia.</b>'}</p>
+    <div class="row"><button class="btn p" onclick="exportarBackup()">Exportar copia de seguridad</button>
+    <button class="btn" onclick="$('#fbk').click()">Importar copia de seguridad</button><input type="file" id="fbk" accept=".json" style="display:none" onchange="importarBackup(this.files[0])">
+    <button class="btn" onclick="borrarEjemplos()">Borrar datos de ejemplo</button>
+    <button class="btn" style="color:#b91c1c;border-color:#b91c1c" onclick="borrarTodo()">Borrar todo</button></div></div>
+  <div class="card"><h2 style="margin-top:0">Institución y rotación de guardias</h2><div class="grid g4">
+    <div class="f" style="grid-column:1/-1"><label>Nombre de la institución (encabezados e impresiones)</label><input id="cfI" value="${h(c.institucion)}"></div>
+    ${GUARDIAS.map(g=>`<div class="f"><label>Un día que trabajó la Guardia ${g}</label><input type="date" id="cfR${g}" value="${c.rotacion[g]||''}"></div>`).join('')}
+    <div class="f"><label>Mínimo de presentes por guardia</label><input type="number" id="cfMin" value="${c.minPresentes}"></div>
+    <div class="f"><label>Máximo de licencias a la vez por guardia</label><input type="number" id="cfMax" value="${c.maxLicencia}"></div></div>
+    <p class="muted">Con una fecha por guardia alcanza: el sistema calcula el resto cada 3 días. Hoy (${fmt(hoy())}) le toca a la <b>Guardia ${guardiaDelDia(hoy())||'?'}</b>.</p>
+    <button class="btn p" onclick="guardarConfig()">Guardar</button></div>
+  <div class="card"><h2 style="margin-top:0">Códigos de asistencia</h2>
+    <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Sigla</th><th>Nombre</th><th>Fondo</th><th>Texto</th><th>Tecla</th><th>Vista</th><th></th></tr></thead><tbody>
+    ${c.codigos.map((x,i)=>`<tr><td><input style="width:90px" value="${h(x.sigla)}" onchange="codSet(${i},'sigla',this.value)" ${['P','FC','CM','LA','CG'].includes(x.sigla)?'readonly title="Código del sistema"':''}></td><td><input value="${h(x.nombre)}" onchange="codSet(${i},'nombre',this.value)"></td>
+      <td><input type="color" value="${x.color}" onchange="codSet(${i},'color',this.value)"></td><td><input type="color" value="${x.texto}" onchange="codSet(${i},'texto',this.value)"></td>
+      <td><input style="width:50px" maxlength="1" value="${h(x.tecla||'')}" onchange="codSet(${i},'tecla',this.value)"></td><td><b style="background:${x.color};color:${x.texto};padding:3px 9px;border-radius:5px">${h(x.sigla)}</b></td>
+      <td>${['P','FC','CM','LA','CG'].includes(x.sigla)?'':`<button class="btn s" onclick="codDel(${i})">Quitar</button>`}</td></tr>`).join('')}</tbody></table></div>
+    <button class="btn" style="margin-top:8px" onclick="codAdd()">+ Agregar código</button>
+    <p class="muted">P, FC, CM, LA y CG están conectados con otros módulos y no se pueden quitar.</p></div>
+  <div class="card"><h2 style="margin-top:0">Feriados (para contar días hábiles de licencia)</h2>
+    <p class="muted">Uno por renglón, formato dd/mm/aaaa. Ya están cargados los mismos días que usa el cronograma de licencias 26-27 (incluye 24 y 31 de diciembre como no laborables). Revisá los feriados trasladables de cada año.</p>
+    <textarea id="cfF" style="min-height:220px;font-family:monospace">${c.feriados.slice().sort().map(fmt).join('\n')}</textarea>
+    <button class="btn p" onclick="guardarFeriados()">Guardar feriados</button></div>`;
+}
+function guardarConfig(){ const c = DB.config; c.institucion = val('cfI').trim()||c.institucion; GUARDIAS.forEach(g=>c.rotacion[g]=val('cfR'+g)); c.minPresentes = +val('cfMin')||0; c.maxLicencia = +val('cfMax')||0; save(); render(); toast('Configuración guardada','ok'); }
+function codSet(i,k,v){ DB.config.codigos[i][k] = k==='sigla'?v.trim().toUpperCase():k==='tecla'?v.toLowerCase():v; save(); render(); }
+function codAdd(){ DB.config.codigos.splice(DB.config.codigos.length-1, 0, {sigla:'NUEVO', nombre:'Nuevo código', color:'#e5e7eb', texto:'#111827', tecla:''}); save(); render(); }
+function codDel(i){ DB.config.codigos.splice(i,1); save(); render(); }
+function guardarFeriados(){ const fs = val('cfF').split(/\n/).map(x=>parseFecha(x.trim())).filter(Boolean); DB.config.feriados = [...new Set(fs)].sort(); save(); render(); toast(`${fs.length} feriados guardados`,'ok'); }
+function exportarBackup(){
+  DB.config.ultimoBackup = new Date().toISOString(); save();
+  descargar(`respaldo_ETAC_personal_${hoy()}.json`, JSON.stringify(DB, null, 1), 'application/json');
+  render(); toast('Copia descargada. Guardala en un lugar seguro.','ok');
+}
+async function importarBackup(f){
+  if (!f) return;
+  try{
+    const d = JSON.parse(await f.text()); if (!d.personal || !d.config) throw new Error('El archivo no es una copia de seguridad de este sistema.');
+    if (!(await confirmar(`La copia tiene ${d.personal.length} personas. Se van a REEMPLAZAR todos los datos actuales. ¿Continuar?`))) return;
+    DB = migrar(d); save(); render(); toast('Copia de seguridad restaurada','ok');
+  }catch(e){ toast(e.message,'e'); }
+}
+async function borrarEjemplos(){
+  if (!(await confirmar('¿Borrar los registros de ejemplo (horas extras, capacitación, carpeta y novedad de muestra)? El personal no se borra.'))) return;
+  ['horas','francos','licencias','capacitaciones','carpetas','novedades'].forEach(k=>DB[k] = DB[k].filter(x=>!x.ejemplo));
+  save(); render(); toast('Datos de ejemplo borrados','ok');
+}
+async function borrarTodo(){
+  const t = await confirmar('Esto borra TODOS los datos (personal incluido). Escribí BORRAR para confirmar.', true, 'Confirmación');
+  if (t !== 'BORRAR') return toast('No se borró nada');
+  const cfg = DB.config; DB = datosIniciales(); ['personal','horas','capacitaciones','carpetas','novedades'].forEach(k=>DB[k]=[]); DB.config = cfg; save(); render();
+}
+function migrar(d){ const b = datosIniciales(); for (const k of Object.keys(b)) if (d[k]==null) d[k] = b[k]; d.config = {...b.config, ...d.config}; return d; }
+
+/* =====================================================
+   17. VISTA: ACERCA DE
+   ===================================================== */
+function vAcerca(){
+  return `<div class="card acerca"><img src="logo-etac.jpg" alt="ETAC" onerror="logoFallback(this,'ETAC')"><img src="logo-jmm.png" alt="JMM" onerror="logoFallback(this,'JMM')">
+  <h1>Sistema de Gestión de Personal</h1><p>${h(DB.config.institucion)}</p><p><b>Versión 1.0</b> – Noviembre 2026</p>
+  <p>Autor: <b>Maldonado Jorge Matias – JMM Gestiones y Tecnologías</b></p>
+  <p><a class="btn p" href="https://wa.me/543541633175" target="_blank" rel="noopener">WhatsApp 3541 633175</a> <a class="btn" href="mailto:jorgematiasmaldonado@gmail.com">jorgematiasmaldonado@gmail.com</a></p>
+  <p class="muted">Los datos se guardan únicamente en este navegador. Hacé copias de seguridad desde Configuración.</p></div>`;
+}
+
+/* =====================================================
+   18. ARRANQUE
+   ===================================================== */
+(async function init(){
+  await Store.open();
+  const d = await Store.get('data');
+  DB = d ? migrar(d) : datosIniciales();
+  if (!d) save();
+  menu(); render();
+  if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
+})();
+</script>
+</body>
+</html>

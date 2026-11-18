@@ -1,0 +1,22 @@
+SISTEMA DE GESTIÓN DE PERSONAL – ETAC
+Desarrollado por JMM Gestiones y Tecnologías – Maldonado Jorge Matias
+WhatsApp 3541 633175 · jorgematiasmaldonado@gmail.com
+
+CÓMO USARLO
+1. Descomprimí esta carpeta en la computadora (por ejemplo, en el Escritorio).
+2. Abrí index.html con Chrome o Edge. No hace falta instalar nada ni tener internet.
+3. Dejá los logos (logo-etac.jpg y logo-jmm.png) en la misma carpeta que index.html.
+4. Usá siempre el mismo navegador en la misma computadora: los datos se guardan ahí.
+
+PRIMEROS PASOS
+- Configuración: revisá la fecha de rotación de cada guardia (viene cargada B = 03/11/2026, A = 02/11, C = 04/11).
+- Personal: ya están cargadas las 3 guardias tomadas de las planillas. Completá DNI, cargo, etc.
+  Si alguien traía horas extras acumuladas en papel, cargalas en "Horas extras acumuladas antes de usar el sistema".
+- Licencia anual > Importar archivo: elegí "Licencias_26-27_Guardia_A.csv" (incluido) o el PDF del cronograma.
+- Configuración > "Borrar datos de ejemplo" cuando termines de probar.
+
+COPIAS DE SEGURIDAD
+- Configuración > "Exportar copia de seguridad" descarga un archivo .json con todo.
+- Guardalo en un pendrive o en Drive al menos una vez por semana.
+- Para pasar los datos a otra computadora: "Importar copia de seguridad" en la otra.
+- Si se borran los datos del navegador (historial/cookies), se pierde lo que no esté respaldado.
