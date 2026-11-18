@@ -1,0 +1,17 @@
+{
+  "name": "Gestión de Personal – ETAC",
+  "short_name": "Personal ETAC",
+  "description": "Asistencia, horas extras, francos, licencias, carpetas médicas, capacitaciones e informes de las guardias de ETAC. Desarrollado por JMM Gestiones y Tecnologías.",
+  "lang": "es-AR",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0d0d0d",
+  "theme_color": "#0d0d0d",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

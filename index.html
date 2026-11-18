@@ -3,7 +3,7 @@
   ============================================================
   Sistema de Gestión de Personal – ETAC
   (Equipo Técnico de Acción ante Catástrofes)
-  Versión 3.0 – Noviembre 2026
+  Versión 3.1 – Noviembre 2026
 
   Autor: Maldonado Jorge Matias – JMM Gestiones y Tecnologías
   Contacto: WhatsApp 3541 633175 · jorgematiasmaldonado@gmail.com
@@ -18,6 +18,14 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Gestión de Personal – ETAC</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d0d0d">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
+<meta name="apple-mobile-web-app-title" content="Personal ETAC">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<link rel="icon" type="image/png" href="icons/favicon.png">
 <script>try{document.documentElement.dataset.theme=localStorage.getItem('etac_tema')||(matchMedia('(prefers-color-scheme: dark)').matches?'dark':'light');}catch(e){}</script>
 <style>
 /* ===================== ESTILOS =====================
@@ -44,9 +52,9 @@ body{font-family:system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;font
 a{color:inherit}
 header.top{background:var(--negro);color:#fff;display:flex;align-items:center;gap:14px;padding:8px 16px;position:sticky;top:0;z-index:30;min-height:62px}
 header.top img{height:44px;width:auto;max-width:200px;object-fit:contain}
-header.top .tit{font-weight:700;font-size:19px;line-height:1.1}
+header.top .tit{font-weight:700;font-size:19px;line-height:1.1;margin-right:auto}
 header.top .tit small{display:block;font-weight:400;font-size:13px;color:#d1d5db}
-.tema{margin-left:auto;background:#262626;border:1px solid #444;color:#fff;border-radius:999px;padding:7px 14px;font:inherit;font-size:15px;cursor:pointer;white-space:nowrap}
+.tema{background:#262626;border:1px solid #444;color:#fff;border-radius:999px;padding:7px 14px;font:inherit;font-size:15px;cursor:pointer;white-space:nowrap}
 .tema:hover{background:#333}
 .logo-txt{font-weight:900;letter-spacing:2px;font-size:24px;color:#fff;border:2px solid var(--rojo);padding:2px 8px;border-radius:6px}
 nav.menu{background:#1f1f1f;display:flex;overflow-x:auto;position:sticky;top:62px;z-index:29}
@@ -264,6 +272,7 @@ table.ht{border-collapse:collapse;width:100%;font-size:11.5px}
 <header class="top">
   <img src="logo-etac.jpg" alt="ETAC" id="logoEtac" onerror="logoFallback(this,'ETAC')">
   <div class="tit">Gestión de Personal<small id="nombreInst">ETAC – Equipo Técnico de Acción ante Catástrofes</small></div>
+  <button class="tema" id="btnInstalar" onclick="instalarApp()" style="display:none;margin-left:auto;background:#1F5FAD;border-color:#3A7BD5" title="Instalar el sistema como aplicación">📲<span class="tt"> Instalar app</span></button>
   <button class="tema" id="btnTema" onclick="cambiarTema()" title="Cambiar entre tema claro y oscuro">🌙 Tema oscuro</button>
 </header>
 <nav class="menu" id="menu"></nav>
@@ -2040,7 +2049,7 @@ function migrar(d){ const b = datosIniciales(); for (const k of Object.keys(b)) 
    ===================================================== */
 function vAcerca(){
   return `<div class="card acerca"><img src="logo-etac.jpg" alt="ETAC" onerror="logoFallback(this,'ETAC')"><img src="logo-jmm.png" alt="JMM" onerror="logoFallback(this,'JMM')">
-  <h1>Sistema de Gestión de Personal</h1><p>${h(DB.config.institucion)}</p><p><b>Versión 3.0</b> – Noviembre 2026</p>
+  <h1>Sistema de Gestión de Personal</h1><p>${h(DB.config.institucion)}</p><p><b>Versión 3.1</b> – Noviembre 2026</p>
   <p>Autor: <b>Maldonado Jorge Matias – JMM Gestiones y Tecnologías</b></p>
   <p><a class="btn p" href="https://wa.me/543541633175" target="_blank" rel="noopener">WhatsApp 3541 633175</a> <a class="btn" href="mailto:jorgematiasmaldonado@gmail.com">jorgematiasmaldonado@gmail.com</a></p>
   <p class="muted">Los datos se guardan únicamente en este navegador. Hacé copias de seguridad desde Configuración.</p></div>`;
@@ -2534,6 +2543,26 @@ async function deshacerGen(mod){
 const btnImport = mod => `<button class="btn" onclick="abrirImport('${mod}')">📥 Importar archivo</button>`;
 
 /* =====================================================
+   21. APLICACIÓN INSTALABLE (celular y computadora)
+   ===================================================== */
+let eventoInstalar = null;
+const esStandalone = () => matchMedia('(display-mode: standalone)').matches || navigator.standalone === true;
+const esIOS = () => /iphone|ipad|ipod/i.test(navigator.userAgent) || (navigator.platform==='MacIntel' && navigator.maxTouchPoints>1);
+function botonInstalar(){ const b = $('#btnInstalar'); if (b) b.style.display = (!esStandalone() && (eventoInstalar || esIOS())) ? '' : 'none'; }
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); eventoInstalar = e; botonInstalar(); });
+window.addEventListener('appinstalled', () => { eventoInstalar = null; botonInstalar(); toast('¡Listo! El sistema quedó instalado como aplicación.','ok'); });
+async function instalarApp(){
+  if (eventoInstalar){ eventoInstalar.prompt(); const r = await eventoInstalar.userChoice; if (r.outcome==='accepted') eventoInstalar = null; botonInstalar(); return; }
+  modal(`<h2>📲 Instalar la aplicación</h2>${esIOS()?`<p>En iPhone o iPad:</p><ol><li>Abrí este link en <b>Safari</b>.</li><li>Tocá el botón <b>Compartir</b> (cuadrado con flecha ↑).</li><li>Elegí <b>"Agregar a inicio"</b> y tocá <b>Agregar</b>.</li></ol>`:`<p>En el menú del navegador (⋮) elegí <b>"Instalar aplicación"</b> o <b>"Agregar a la pantalla principal"</b>.</p>`}
+  <div class="acc"><button class="btn p" onclick="cerrarModal()">Entendido</button></div>`);
+}
+if ('serviceWorker' in navigator && location.protocol.startsWith('http')){
+  window.addEventListener('load', () => navigator.serviceWorker.register('sw.js').then(reg => {
+    reg.addEventListener('updatefound', () => { const w = reg.installing; w && w.addEventListener('statechange', () => { if (w.state==='installed' && navigator.serviceWorker.controller) toast('Hay una versión nueva del sistema.', '', ['Actualizar ahora', () => location.reload()]); }); });
+  }).catch(e => console.warn('SW', e)));
+}
+
+/* =====================================================
    18. ARRANQUE
    ===================================================== */
 (async function init(){
@@ -2541,7 +2570,7 @@ const btnImport = mod => `<button class="btn" onclick="abrirImport('${mod}')">�
   const d = await Store.get('data');
   DB = d ? migrar(d) : datosIniciales();
   if (!d) save();
-  menu(); render(); botonTema();
+  menu(); render(); botonTema(); botonInstalar();
   if (navigator.storage && navigator.storage.persist) navigator.storage.persist().catch(()=>{});
 })();
 </script>
