@@ -3,7 +3,7 @@
   ============================================================
   Sistema de Gestión de Personal – ETAC
   (Equipo Técnico de Acción ante Catástrofes)
-  Versión 2.0 – Noviembre 2026
+  Versión 3.0 – Noviembre 2026
 
   Autor: Maldonado Jorge Matias – JMM Gestiones y Tecnologías
   Contacto: WhatsApp 3541 633175 · jorgematiasmaldonado@gmail.com
@@ -28,7 +28,7 @@
   --bg:#f3f4f6; --card:#ffffff; --card2:#f9fafb; --borde:#d1d5db; --borde2:#e5e7eb; --texto:#111827; --sub:#4b5563;
   --input:#ffffff; --input-b:#9ca3af; --hover:#f3f4f6; --link:#1d4ed8; --th:#111111; --th-tx:#ffffff; --nc:#f3f4f6;
   --verde:#15803d; --verde-bg:#dcfce7; --amar:#a16207; --amar-bg:#fef9c3; --amar-b:#facc15; --rojo-bg:#fee2e2; --rojo-tx:#991b1b; --rojo-b:#fca5a5;
-  --banner:#fef3c7; --sombra:0 6px 24px rgba(0,0,0,.12);
+  --banner:#fef3c7; --sombra:0 6px 24px rgba(0,0,0,.12); --gd-bg:#bfe9f5; --gd-tx:#075985;
   color-scheme:light;
 }
 [data-theme="dark"]{
@@ -36,7 +36,7 @@
   --bg:#0e131b; --card:#161c26; --card2:#1c2330; --borde:#2e3a4b; --borde2:#253041; --texto:#e8edf4; --sub:#9fadbf;
   --input:#0e131b; --input-b:#3d4b60; --hover:#212a37; --link:#7cb3ff; --th:#05070a; --th-tx:#e8edf4; --nc:#212a37;
   --verde:#4ade80; --verde-bg:#11301e; --amar:#facc15; --amar-bg:#352c0c; --amar-b:#7c6513; --rojo-bg:#3a1416; --rojo-tx:#fca5a5; --rojo-b:#7f1d1d;
-  --banner:#352a0a; --sombra:0 6px 24px rgba(0,0,0,.5);
+  --banner:#352a0a; --sombra:0 6px 24px rgba(0,0,0,.5); --gd-bg:#155e75; --gd-tx:#e0f7ff;
 }
 *{box-sizing:border-box}
 html,body{margin:0;padding:0}
@@ -144,6 +144,10 @@ table.cal{border-collapse:collapse;font-size:12px;background:var(--card)}
 .cal td.nom{width:auto;text-align:left;padding:2px 6px;white-space:nowrap;font-size:13px;font-weight:600}
 .cal td.lic{background:var(--rojo);color:#fff}
 .cal td.fs{background:var(--nc)}
+.cal td.gd{background:var(--gd-bg);color:var(--gd-tx);font-weight:800;font-size:10px}
+.cal th.gd{background:#0891b2;color:#fff}
+.cal td.lic.gd{background:var(--rojo);color:#fff;box-shadow:inset 0 -5px 0 #22d3ee}
+@media print{.cal td.gd,.cal th.gd{-webkit-print-color-adjust:exact;print-color-adjust:exact}}
 .cal tfoot td.exc{background:#fde047;color:#111;font-weight:800}
 /* Modal y avisos */
 .modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:flex-start;justify-content:center;z-index:100;padding:30px 10px;overflow:auto}
@@ -357,7 +361,7 @@ const FERIADOS_INICIALES = [
   '2026-01-01','2026-02-16','2026-02-17','2026-03-23','2026-03-24','2026-04-02','2026-04-03','2026-05-01','2026-05-25',
   '2026-06-15','2026-06-20','2026-07-09','2026-07-10','2026-08-17','2026-10-12','2026-11-23','2026-12-08','2026-12-24','2026-12-25','2026-12-31',
   // 2027 (los mismos que usa el cronograma de licencias 26-27)
-  '2027-01-01','2027-02-08','2027-02-09','2027-03-24','2027-03-26','2027-04-02','2027-05-25','2027-07-09','2027-12-08','2027-12-24','2027-12-25','2027-12-31'
+  '2027-01-01','2027-02-08','2027-02-09','2027-03-24','2027-03-26','2027-04-02','2027-05-25','2027-06-21','2027-07-09','2027-12-08','2027-12-24','2027-12-25','2027-12-31'
 ];
 const CODIGOS_INICIALES = [
   {sigla:'P', nombre:'Presente', color:'#dcfce7', texto:'#166534', tecla:'p'},
@@ -385,7 +389,7 @@ function datosIniciales(){
       rotacion: { A: '2026-11-02', B: '2026-11-03', C: '2026-11-04' },
       codigos: CODIGOS_INICIALES.map(c => ({...c})),
       feriados: [...FERIADOS_INICIALES],
-      minPresentes: 12, maxLicencia: 3, ultimoBackup: null
+      minPresentes: 12, maxLicencia: 3, horaGuardia: '08:00', diasLicMedica: 10, ultimoBackup: null
     }
   };
   for (const g of GUARDIAS) PERSONAL_INICIAL[g].forEach(n => db.personal.push(nuevaPersona({nombre:n, guardia:g})));
@@ -616,6 +620,7 @@ function vInicio(){
     <div class="stat a"><div class="n">${cg.length}</div><div class="l">Cambios de guardia sin devolver</div>${li(cg,c=>`<li>${h(nombreP(c.personaId))} ↔ ${h(nombreP(c.conId))}${c.devolucion?' – devuelve '+fmt(c.devolucion):''}</li>`)}</div>
     <div class="stat c"><div class="n">${caps.length}</div><div class="l">Próximas capacitaciones</div>${li(caps,c=>`<li>${fmt(c.fecha)}: ${h(c.tema)}</li>`)}</div>
     <div class="stat r"><div class="n">${certP.length}</div><div class="l">Certificados médicos pendientes</div>${li(certP,c=>`<li>${h(nombreP(c.personaId))} (desde ${fmt(c.inicio)})</li>`)}</div>
+    ${(()=>{ const lp = lmPendientes(ids); return `<div class="stat r"><div class="n">${lp.length}</div><div class="l">Licencias médicas sin homologar (más de ${umbralLM()} días)</div>${li(lp,({p,e})=>`<li>${h(p.nombre)}: ${e.dias} días – ${e.homo}</li>`)}</div>`; })()}
   </div>
   <h2>Vista por guardia</h2>
   <div class="grid g3" style="align-items:start">${gsVisibles().map(g=>{ const mi = ps.filter(p=>guardiaEn(p,t)===g); return grupo('ini-'+g, tituloG(g), mi.length,
@@ -636,7 +641,7 @@ function vPersonal(){
   ${barra('personal', `<div><label>&nbsp;</label><label style="margin-top:8px"><input type="checkbox" ${filtroInact?'checked':''} onchange="filtroInact=this.checked;render()"> Ver inactivos</label></div>`)}
   <div class="row noprint" style="margin-bottom:12px">
     <button class="btn p" onclick="editarPersona()">+ Nueva persona</button>
-    <button class="btn" onclick="importarPersonal()">Importar desde Excel/CSV</button>
+    ${btnImport('personal')}
     <button class="btn" onclick="exportarPersonal()">Exportar CSV</button>
     <button class="btn" onclick="imprimir()">Imprimir</button>
   </div>
@@ -736,10 +741,10 @@ function ficha(id){
   </div>
   <h3>Asistencia ${y}</h3><div>${Object.keys(cuenta).length?Object.entries(cuenta).map(([k,v])=>`<span class="tag" style="margin:2px">${h(k)}: ${v}</span>`).join(''):'<span class="muted">Sin registros.</span>'}</div>
   <h3>Formularios de horas extras (suman al saldo)</h3>
-  ${hs.length?`<div class="tbl-wrap"><table class="tbl"><tr><th>Fecha</th><th>Tipo</th><th>Horario</th><th class="num">Tiempo</th><th>Motivo</th><th>N.º form.</th></tr>${hs.map(x=>`<tr class="${x.anulado?'anul':''}"><td>${fmt(x.fecha)}</td><td>${tipoHora(x.tipo)}</td><td>${x.desde} a ${x.hasta}</td><td class="num">${minHM(x.min)}</td><td>${h(x.motivo)}${x.anulado?` (ANULADO: ${h(x.motivoAnulacion)})`:''}</td><td>${h(x.nroForm)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Sin formularios.</p>'}
+  ${hs.length?`<div class="tbl-wrap"><table class="tbl"><tr><th>Fecha</th><th>Tipo</th><th>Horario</th><th class="num">Tiempo</th><th>Motivo</th><th>N.º form.</th></tr>${hs.map(x=>`<tr class="${x.anulado?'anul':''}"><td>${fmt(x.fecha)}</td><td>${tipoHora(x.tipo)}</td><td>${horarioH(x)}</td><td class="num">${tiempoH(x)}</td><td>${h(x.motivo)}${x.anulado?` (ANULADO: ${h(x.motivoAnulacion)})`:''}</td><td>${h(x.nroForm)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Sin formularios.</p>'}
   <h3>Francos compensatorios tomados</h3>${fr.length?`<p>${fr.map(x=>`${fmt(x.fecha)}${x.forzado?' (forzado)':''}`).join(' · ')}</p>`:'<p class="muted">Ninguno.</p>'}
   <h3>Licencia anual</h3>${li.length?li.map(l=>{const c=licDe(l); return `<p><b>${h(l.periodo)}</b>: ${l.disponibles} disponibles · ${c.usados} usados · <b>${c.restantes} restantes</b><br>${l.franjas.map((f,i)=>`${i+1}.ª franja: ${fmt(f.desde)} – ${fmt(f.hasta)}`).join(' · ')}</p>`;}).join(''):'<p class="muted">Sin licencias cargadas.</p>'}
-  <h3>Carpetas médicas</h3>${ca.length?`<div class="tbl-wrap"><table class="tbl"><tr><th>Desde</th><th>Hasta</th><th class="num">Días</th><th>Tipo</th><th>Certificado</th></tr>${ca.map(c=>`<tr><td>${fmt(c.inicio)}</td><td>${fmt(finCarpeta(c))}</td><td class="num">${c.dias}</td><td>${h(c.tipo)}</td><td>${c.presento?'Presentado':'<span class="tag r">Pendiente</span>'} ${h(c.nroCert)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Ninguna.</p>'}
+  <h3>Carpetas médicas</h3>${ca.length?`<div class="tbl-wrap"><table class="tbl"><tr><th>Desde</th><th>Hasta</th><th class="num">Días</th><th>Tipo</th><th>Certificado</th></tr>${ca.map(c=>`<tr><td>${fmt(c.inicio)}</td><td>${fmt(finCarpeta(c))}</td><td class="num">${c.dias}</td><td>${h(c.tipo)}</td><td>${c.presento?'Presentado':'<span class="tag r">Pendiente</span>'} ${h(c.nroCert)} ${badgeLM(c)}</td></tr>`).join('')}</table></div>`:'<p class="muted">Ninguna.</p>'}
   <h3>Capacitaciones (${horasCap} h)</h3>${cp.length?`<p>${cp.map(c=>`${fmt(c.fecha)} – ${h(c.tema)} (${estadoCap(c.asistentes[id])})`).join('<br>')}</p>`:'<p class="muted">Ninguna.</p>'}
   ${printFoot()}`, 'xl');
 }
@@ -782,7 +787,7 @@ function vAsistencia(){
   </table></div>` : `<div class="pad"><div class="warn" style="margin:0">${todos.length?'Nadie de esta guardia coincide con la búsqueda.':'No hay personal en esta guardia.'}</div></div>`;
   return `<h1 class="noprint">Asistencia por guardia</h1>
   ${barra('asistencia', extra, {gSel:g, sinTodas:true})}
-  <div class="row noprint" style="margin-bottom:10px"><button class="btn" onclick="tablaACSV('#plan','asistencia_${MESES[m]}_${y}_G${g}.csv')">Exportar CSV</button><button class="btn d" onclick="imprimir()">Imprimir planilla</button></div>
+  <div class="row noprint" style="margin-bottom:10px">${btnImport('asistencia')}<button class="btn" onclick="tablaACSV('#plan','asistencia_${MESES[m]}_${y}_G${g}.csv')">Exportar CSV</button><button class="btn d" onclick="imprimir()">Imprimir planilla</button></div>
   <p class="muted noprint" style="margin:0 0 10px">Hacé clic en una casilla o usá el teclado: ${cods.filter(c=>c.tecla).map(c=>`<b>${h(c.tecla.toUpperCase())}</b>=${h(c.sigla)}`).join(' · ')} · <b>Supr</b>=borrar · <b>Enter</b>=detalle · flechas para moverse.</p>
   ${printHead('')}
   ${grupo('asis-plan', `${MESES[m].toUpperCase()} ${y} - GUARDIA "${g}"`, per.length+' personas', tabla)}
@@ -874,15 +879,16 @@ function vHoras(){
   ${barra('horas')}
   ${grupo('hor-form', 'Cargar formulario de horas extras', null, `<div class="pad"><div class="grid g4">
     <div class="f"><label>Persona *</label><select id="hp"><option value="">Elegir…</option>${optPersonasF()}</select></div>
-    <div class="f"><label>Fecha *</label><input type="date" id="hf" value="${hoy()}"></div>
-    <div class="f"><label>Tipo</label><select id="ht"><option value="retiro">Retiro posterior</option><option value="ingreso">Ingreso anticipado</option><option value="otro">Otro</option></select></div>
-    <div class="f"><label>Hora desde *</label><input type="time" id="hd" oninput="prevH()"></div>
-    <div class="f"><label>Hora hasta *</label><input type="time" id="hh" oninput="prevH()"></div>
-    <div class="f"><label>Tiempo</label><div id="hprev" style="font-size:20px;font-weight:800;padding-top:6px">—</div></div>
+    <div class="f"><label>Tipo</label><select id="ht"><option value="retiro">Retiro posterior</option><option value="ingreso">Ingreso anticipado</option><option value="otro">Otro / día libre</option></select></div>
+    <div class="f"><label>Fecha de ingreso *</label><input type="date" id="hf" value="${hoy()}" onchange="window._hf2m||($('#hf2').value='');prevH()"></div>
+    <div class="f"><label>Hora de ingreso *</label><input type="time" id="hd" oninput="prevH()"></div>
+    <div class="f"><label>Fecha de salida *</label><input type="date" id="hf2" onchange="window._hf2m=true;prevH()"></div>
+    <div class="f"><label>Hora de salida *</label><input type="time" id="hh" oninput="prevH()"></div>
     <div class="f"><label>Motivo</label><input id="hm"></div>
     <div class="f"><label>Autorizó</label><input id="ha"></div>
     <div class="f"><label>N.º de formulario en papel</label><input id="hn"></div>
-  </div><button class="btn p" onclick="guardarHora()">Guardar formulario</button> <span class="muted">Si la hora "hasta" es menor que "desde", se toma que cruzó la medianoche.</span></div>`)}
+  </div><div id="hprev" class="okbox" style="display:none"></div>
+  <button class="btn p" onclick="guardarHora()">Guardar formulario</button> <span class="muted">Puede abarcar varios días. Las horas que caen dentro de su propia guardia (${horaGuardia()} a ${horaGuardia()}) se descuentan solas.</span></div>`)}
   <h2>Saldo por persona <span class="muted">(cada 24 h = 1 franco)</span></h2>
   <div class="row noprint" style="margin-bottom:8px"><div><label>Ordenar por</label><select onchange="UI.horasOrden=this.value;render()">
     <option value="disp" ${ord!=='nombre'?'selected':''}>Saldo (mayor primero)</option><option value="nombre" ${ord==='nombre'?'selected':''}>Nombre</option></select></div>
@@ -892,36 +898,83 @@ function vHoras(){
   <h2>Formularios cargados</h2>
   <div class="row noprint" style="margin-bottom:8px">
     <div><label>Mes</label><input type="month" value="${filtroHmes}" onchange="filtroHmes=this.value;render()"></div>
-    <button class="btn" onclick="tablaACSV('#tblH','formularios_horas_extras.csv')">Exportar CSV</button></div>
+    ${btnImport('horas')}<button class="btn" onclick="tablaACSV('#tblH','formularios_horas_extras.csv')">Exportar CSV</button></div>
   ${grupo('hor-lista', 'Formularios', lista.length, `<div class="tbl-wrap" style="max-height:60vh"><table class="tbl" id="tblH"><thead><tr><th>Fecha</th><th>Persona</th><th>G</th><th>Tipo</th><th>Horario</th><th class="num">Tiempo</th><th>Motivo</th><th>Autorizó</th><th>N.º form.</th><th class="noprint"></th></tr></thead>
-  <tbody>${lista.map(x=>`<tr class="${x.anulado?'anul':''}"><td>${fmt(x.fecha)}</td><td>${h(nombreP(x.personaId))}</td><td>${persona(x.personaId)?.guardia||''}</td><td>${tipoHora(x.tipo)}</td><td>${x.desde} a ${x.hasta}</td><td class="num">${minHM(x.min)}</td><td>${h(x.motivo)}${x.anulado?`<br><small>ANULADO: ${h(x.motivoAnulacion)}</small>`:''}</td><td>${h(x.autorizo)}</td><td>${h(x.nroForm)}</td>
+  <tbody>${lista.map(x=>`<tr class="${x.anulado?'anul':''}"><td>${fmt(x.fecha)}</td><td>${h(nombreP(x.personaId))}</td><td>${persona(x.personaId)?.guardia||''}</td><td>${tipoHora(x.tipo)}</td><td>${horarioH(x)}</td><td class="num">${tiempoH(x)}</td><td>${h(x.motivo)}${x.anulado?`<br><small>ANULADO: ${h(x.motivoAnulacion)}</small>`:''}</td><td>${h(x.autorizo)}</td><td>${h(x.nroForm)}</td>
     <td class="noprint">${x.anulado?`<button class="btn s" onclick="reactivarHora('${x.id}')">Reactivar</button>`:`<button class="btn s" onclick="editarHora('${x.id}')">Editar</button> <button class="btn s" onclick="anularHora('${x.id}')">Anular</button>`}</td></tr>`).join('') || '<tr><td colspan="10" class="muted">No hay formularios.</td></tr>'}</tbody></table></div>`)}
   ${printFoot()}`;
 }
-function prevH(){ const m = calcMin(val('hd'), val('hh')); $('#hprev').textContent = (val('hd')&&val('hh')) ? minHM(m) : '—'; }
-function guardarHora(){
-  const pid = val('hp'), f = val('hf'), de = val('hd'), ha = val('hh');
-  if (!pid || !f || !de || !ha) return alert('Completá persona, fecha, hora desde y hora hasta');
+function prevH(){
+  const pid = val('hp'), f = val('hf'), de = val('hd'), ha = val('hh'); const e = $('#hprev'); if (!e) return;
+  if (f && de && ha && !window._hf2m) $('#hf2').value = ha <= de ? addD(f,1) : f;
+  const ff = val('hf2');
+  if (!f || !de || !ha || !ff){ e.style.display = 'none'; return; }
+  const r = calcHoras(pid, f, de, ff, ha); e.style.display = 'block';
+  if (!r){ e.className = 'err'; e.innerHTML = 'La salida es anterior o igual al ingreso.'; return; }
+  e.className = r.extra > 0 ? 'okbox' : 'warn';
+  e.innerHTML = `Tiempo total: <b>${minHM(r.total)}</b>${r.enGuardia ? ` · Dentro de su guardia: <b>${minHM(r.enGuardia)}</b> (no se cuenta)` : ''} · <span style="font-size:19px">Horas extras: <b>${minHM(r.extra)}</b></span>${pid?'':'<br><span class="muted">Elegí la persona para descontar su guardia.</span>'}${r.extra>1440?'<br>⚠ Son más de 24 h extras seguidas: revisá que las fechas sean correctas.':''}`;
+}
+async function guardarHora(){
+  const pid = val('hp'), f = val('hf'), de = val('hd'), ha = val('hh'); let ff = val('hf2');
+  if (!pid || !f || !de || !ha) return alert('Completá persona, fecha y hora de ingreso, y hora de salida');
+  if (!ff) ff = ha <= de ? addD(f,1) : f;
+  const r = calcHoras(pid, f, de, ff, ha);
+  if (!r) return alert('La fecha y hora de salida tiene que ser posterior al ingreso.');
+  if (r.extra <= 0) return alert(`Todo ese horario cae dentro de la guardia de ${nombreP(pid)}: no hay horas extras para cargar.`);
+  if (r.extra > 1440 && !(await confirmar(`Son ${minHM(r.total)} seguidas (del ${fmt(f)} ${de} al ${fmt(ff)} ${ha}). Horas extras: ${minHM(r.extra)}. ¿Es correcto?`))) return;
   const antes = saldo(pid).ganados;
-  DB.horas.push({id:uid(), personaId:pid, fecha:f, tipo:val('ht'), desde:de, hasta:ha, min:calcMin(de,ha), motivo:val('hm').trim(), autorizo:val('ha').trim(), nroForm:val('hn').trim(), anulado:false});
-  save(); const s = saldo(pid);
-  render();
-  if (s.ganados > antes) toast(`🎉 ${nombreP(pid)} completó 24 h: tiene ${s.disp} franco(s) disponible(s).`,'ok'); else toast(`Guardado. A ${nombreP(pid)} le faltan ${minHM(s.resto)} para el próximo franco.`,'ok');
+  DB.horas.push({id:uid(), personaId:pid, fecha:f, fechaHasta:ff, tipo:val('ht'), desde:de, hasta:ha, min:r.extra, totalMin:r.total, guardiaMin:r.enGuardia, motivo:val('hm').trim(), autorizo:val('ha').trim(), nroForm:val('hn').trim(), anulado:false});
+  window._hf2m = false; save(); const s = saldo(pid); render();
+  if (s.ganados > antes) toast(`🎉 Se cargaron ${minHM(r.extra)}. ${nombreP(pid)} tiene ${s.disp} franco(s) disponible(s).`,'ok'); else toast(`Se cargaron ${minHM(r.extra)}. A ${nombreP(pid)} le faltan ${minHM(s.resto)} para el próximo franco.`,'ok');
 }
 function editarHora(id){
   const x = DB.horas.find(z=>z.id===id);
   modal(`<h2>Editar formulario</h2><div class="grid g2">
-  <div class="f"><label>Persona</label><select id="ep">${optPersonas(x.personaId,true)}</select></div>
-  <div class="f"><label>Fecha</label><input type="date" id="ef" value="${x.fecha}"></div>
+  <div class="f"><label>Persona</label><select id="ep" onchange="prevEH()">${optPersonas(x.personaId,true)}</select></div>
   <div class="f"><label>Tipo</label><select id="et">${['retiro','ingreso','otro'].map(t=>`<option value="${t}" ${t===x.tipo?'selected':''}>${tipoHora(t)}</option>`).join('')}</select></div>
-  <div class="f"><label>Desde / hasta</label><div class="row"><input type="time" id="ed" value="${x.desde}"><input type="time" id="eh" value="${x.hasta}"></div></div>
+  <div class="f"><label>Ingreso (fecha y hora)</label><div class="row"><input type="date" id="ef" value="${x.fecha}" onchange="prevEH()"><input type="time" id="ed" value="${x.desde}" oninput="prevEH()"></div></div>
+  <div class="f"><label>Salida (fecha y hora)</label><div class="row"><input type="date" id="ef2" value="${x.fechaHasta || (x.hasta && x.hasta<=x.desde ? addD(x.fecha,1) : x.fecha)}" onchange="prevEH()"><input type="time" id="eh" value="${x.hasta}" oninput="prevEH()"></div></div>
   <div class="f"><label>Motivo</label><input id="em" value="${h(x.motivo)}"></div><div class="f"><label>Autorizó</label><input id="ea" value="${h(x.autorizo)}"></div>
   <div class="f"><label>N.º formulario</label><input id="en" value="${h(x.nroForm)}"></div></div>
+  <div id="ehprev" class="okbox"></div>
   <div class="acc"><button class="btn" onclick="cerrarModal()">Cancelar</button><button class="btn p" onclick="guardarEdHora('${id}')">Guardar</button></div>`);
+  prevEH();
 }
-function guardarEdHora(id){ const x = DB.horas.find(z=>z.id===id); Object.assign(x,{personaId:val('ep'), fecha:val('ef'), tipo:val('et'), desde:val('ed'), hasta:val('eh'), min:calcMin(val('ed'),val('eh')), motivo:val('em'), autorizo:val('ea'), nroForm:val('en')}); save(); cerrarModal(); render(); }
+function prevEH(){ const r = calcHoras(val('ep'), val('ef'), val('ed'), val('ef2'), val('eh')); const e = $('#ehprev'); if (!e) return; e.className = r && r.extra>0 ? 'okbox' : 'err'; e.innerHTML = r ? `Total ${minHM(r.total)}${r.enGuardia?` − ${minHM(r.enGuardia)} de guardia`:''} = <b>${minHM(r.extra)}</b> extras` : 'La salida tiene que ser posterior al ingreso.'; }
+function guardarEdHora(id){
+  const x = DB.horas.find(z=>z.id===id); const r = calcHoras(val('ep'), val('ef'), val('ed'), val('ef2'), val('eh'));
+  if (!r || r.extra <= 0) return alert('Revisá las fechas y horas: no hay horas extras para cargar.');
+  Object.assign(x,{personaId:val('ep'), fecha:val('ef'), fechaHasta:val('ef2'), tipo:val('et'), desde:val('ed'), hasta:val('eh'), min:r.extra, totalMin:r.total, guardiaMin:r.enGuardia, motivo:val('em'), autorizo:val('ea'), nroForm:val('en')});
+  save(); cerrarModal(); render();
+}
 async function anularHora(id){ const m = await confirmar('¿Anular este formulario? Deja de sumar al saldo, pero queda registrado.', true, 'Motivo de la anulación'); if (!m) return; const x = DB.horas.find(z=>z.id===id); x.anulado = true; x.motivoAnulacion = m; save(); render(); }
 function reactivarHora(id){ const x = DB.horas.find(z=>z.id===id); x.anulado = false; x.motivoAnulacion=''; save(); render(); }
+
+/* =====================================================
+   9.b CÁLCULO DE HORAS EXTRAS
+   Toma fecha y hora de ingreso y de salida (puede abarcar varios
+   días) y descuenta las horas que caen dentro de la propia guardia
+   de 24 h de la persona (de 08:00 a 08:00, configurable).
+   No se descuenta si ese día figura con FC, LA, CM, ART o CG.
+   ===================================================== */
+const horaGuardia = () => DB.config.horaGuardia || '08:00';
+function calcHoras(pid, fi, hi, ff, hf){
+  if (!fi || !ff || hi==null || hf==null) return null;
+  const t = (f, hm) => D(f).getTime() + hmToMin(hm)*60000;
+  const a = t(fi,hi), b = t(ff,hf); if (!(b > a)) return null;
+  const p = persona(pid); const hg = hmToMin(horaGuardia()); let enG = 0;
+  if (p) for (let d = addD(fi,-1); d <= ff; d = addD(d,1)){
+    if (guardiaEn(p,d) !== guardiaDelDia(d)) continue;
+    const c = DB.asistencia[kAs(pid,d)]?.cod;
+    if (['FC','LA','CM','ART','CG','—'].includes(c) || (!c && licenciaEn(pid,d))) continue;
+    const s0 = D(d).getTime() + hg*60000, e0 = s0 + 1440*60000;
+    enG += Math.max(0, Math.min(b,e0) - Math.max(a,s0));
+  }
+  const total = Math.round((b-a)/60000), g = Math.round(enG/60000);
+  return {total, enGuardia:g, extra:total-g};
+}
+const horarioH = x => x.fechaHasta && x.fechaHasta !== x.fecha ? `${x.desde} → ${fmt(x.fechaHasta).slice(0,5)} ${x.hasta}` : (x.desde ? `${x.desde} a ${x.hasta}` : 'Cantidad cargada');
+const tiempoH = x => minHM(x.min) + (x.guardiaMin ? `<br><small class="muted">(${minHM(x.totalMin)} − ${minHM(x.guardiaMin)} de guardia)</small>` : '');
 
 /* =====================================================
    10. VISTA: FRANCOS COMPENSATORIOS
@@ -941,7 +994,7 @@ function vFrancos(){
     <div style="flex:1 1 220px"><label>Observaciones</label><input id="fo" style="width:100%"></div>
     <button class="btn p" onclick="guardarFranco()">Registrar</button></div><div id="finfo" class="muted" style="margin-top:8px"></div>
     <p class="muted">También se registran solos al marcar <b>FC</b> en la planilla de asistencia.</p></div>`)}
-  <div class="row noprint" style="margin-bottom:8px"><button class="btn" onclick="exportCSV('francos.csv',[['Fecha','Persona','Guardia','Observaciones','Sin saldo','Justificación'],...DB.francos.filter(x=>pasaId(x.personaId)&&(!filtroFmes||x.fecha.startsWith(filtroFmes))).map(x=>[fmt(x.fecha),nombreP(x.personaId),persona(x.personaId)?.guardia,x.obs,x.forzado?'Sí':'',x.justif||''])])">Exportar CSV</button><button class="btn" onclick="imprimir()">Imprimir</button></div>
+  <div class="row noprint" style="margin-bottom:8px">${btnImport('francos')}<button class="btn" onclick="exportCSV('francos.csv',[['Fecha','Persona','Guardia','Observaciones','Sin saldo','Justificación'],...DB.francos.filter(x=>pasaId(x.personaId)&&(!filtroFmes||x.fecha.startsWith(filtroFmes))).map(x=>[fmt(x.fecha),nombreP(x.personaId),persona(x.personaId)?.guardia,x.obs,x.forzado?'Sí':'',x.justif||''])])">Exportar CSV</button><button class="btn" onclick="imprimir()">Imprimir</button></div>
   ${printHead('Francos compensatorios')}
   ${gsVisibles().map(g=>{ const arr = lista.filter(x=>persona(x.personaId)?.guardia===g); return grupo('fra-'+g, tituloG(g), arr.length, tabla(arr)); }).join('')}
   <h3>Francos por mes</h3><p>${Object.entries(porMes).sort().reverse().map(([k,v])=>`<span class="tag" style="margin:2px">${MESES[+k.slice(5)-1]} ${k.slice(0,4)}: ${v}</span>`).join('')||'<span class="muted">—</span>'}</p>${printFoot()}`;
@@ -1049,8 +1102,10 @@ function licCalendario(){
     const ps = todos.filter(pasaQ);
     const cnt = dias.map(d=>todos.filter(p=>licenciaEn(p.id,d)).length);
     const exc = cnt.some(c=>c>mx);
-    const html = ps.length ? `${exc?`<div class="pad"><div class="warn" style="margin:0">⚠ Hay días con más de ${mx} personas de la Guardia ${g} de licencia al mismo tiempo (marcados en amarillo).</div></div>`:''}<div class="tbl-wrap"><table class="cal"><thead><tr><th style="text-align:left;padding:0 6px">Persona</th>${dias.map(d=>{const w=D(d).getUTCDay(); return `<th title="${fmt(d)}">${+d.slice(8)}<br>${DIAS_C[w]}</th>`;}).join('')}</tr></thead>
-    <tbody>${ps.map(p=>`<tr><td class="nom">${h(p.nombre)}</td>${dias.map(d=>{const w=D(d).getUTCDay(); return `<td class="${licenciaEn(p.id,d)?'lic':(w===0||w===6||fer.has(d))?'fs':''}"></td>`;}).join('')}</tr>`).join('')}</tbody>
+    const gd = d => guardiaDelDia(d) === g;
+    const html = ps.length ? `${exc?`<div class="pad"><div class="warn" style="margin:0">⚠ Hay días con más de ${mx} personas de la Guardia ${g} de licencia al mismo tiempo (marcados en amarillo).</div></div>`:''}<div class="tbl-wrap"><table class="cal" style="--gdc:${COL_G[g]}">
+    <thead><tr><th style="text-align:left;padding:0 6px">Persona</th>${dias.map(d=>{const w=D(d).getUTCDay(); return `<th class="${gd(d)?'gd':''}" title="${fmt(d)}${gd(d)?' – día de guardia':''}">${+d.slice(8)}<br>${DIAS_C[w]}</th>`;}).join('')}</tr></thead>
+    <tbody>${ps.map(p=>`<tr><td class="nom">${h(p.nombre)}</td>${dias.map(d=>{const w=D(d).getUTCDay(); const g2 = guardiaEn(p,d)===guardiaDelDia(d); const l = licenciaEn(p.id,d); return `<td class="${l?'lic':''} ${g2?'gd':''} ${!l&&!g2&&(w===0||w===6||fer.has(d))?'fs':''}" title="${fmt(d)}${g2?' · le toca guardia':''}${l?' · de licencia':''}">${g2?'G':''}</td>`;}).join('')}</tr>`).join('')}</tbody>
     <tfoot><tr><td class="nom">De licencia</td>${cnt.map(c=>`<td class="${c>mx?'exc':''}">${c||''}</td>`).join('')}</tr></tfoot></table></div>` : `<div class="pad muted">Nadie de la Guardia ${g} tiene licencia este mes${F.q?' (con ese filtro)':''}.</div>`;
     return grupo('cal-'+g, tituloG(g) + (exc?' ⚠':''), ps.length, html);
   };
@@ -1060,7 +1115,7 @@ function licCalendario(){
   ${printHead('Calendario de licencias')}
   <h2>${MESES[m-1]} ${y}</h2>
   ${gsVisibles().map(bloque).join('')}
-  <p class="muted">Rojo = de licencia · Gris = fin de semana o feriado.</p>${printFoot()}`;
+  <p class="leyenda"><span><b style="background:var(--rojo);color:#fff">&nbsp;&nbsp;</b>De licencia</span><span><b style="background:var(--gd-bg);color:var(--gd-tx)">G</b>Día de guardia</span><span><b style="background:var(--rojo);color:#fff;box-shadow:inset 0 -4px 0 #22d3ee">G</b>De licencia en un día de guardia</span><span><b style="background:var(--nc)">&nbsp;&nbsp;</b>Fin de semana o feriado</span></p>${printFoot()}`;
 }
 function calMover(d){ let [y,m] = UI.calMes.split('-').map(Number); m+=d; if(m<1){m=12;y--;} if(m>12){m=1;y++;} UI.calMes = `${y}-${String(m).padStart(2,'0')}`; render(); }
 function calMover(d){ let [y,m] = UI.calMes.split('-').map(Number); m+=d; if(m<1){m=12;y--;} if(m>12){m=1;y++;} UI.calMes = `${y}-${String(m).padStart(2,'0')}`; render(); }
@@ -1090,22 +1145,24 @@ function parseCSV(txt){
 async function leerTabla(file){
   const ext = file.name.split('.').pop().toLowerCase();
   if (ext==='csv' || ext==='txt') return parseCSV(await file.text());
+  if (ext==='xlsx' || ext==='xlsm'){ try{ return await leerXLSX(await file.arrayBuffer()); }catch(e){ console.warn(e); } }
+  if (ext==='docx') return await leerDOCX(await file.arrayBuffer());
   await cargarLib(LIBS.xlsx);
   const wb = XLSX.read(await file.arrayBuffer(), {type:'array', cellDates:false});
   return XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:true, defval:''}).filter(r=>r.some(x=>String(x).trim()));
 }
 function licImportar(){
-  const ultima = DB.importaciones[DB.importaciones.length-1];
+  const impsL = DB.importaciones.filter(i=>!i.modulo); const ultima = impsL[impsL.length-1];
   return `<div class="card noprint"><div class="row">
     <div><label>Período al que corresponde</label><input id="impPer" value="${h(UI.licPeriodo)}" style="width:140px"></div>
     <button class="btn" onclick="planillaModelo()">Descargar planilla modelo</button>
     ${ultima && !ultima.deshecha?`<button class="btn" onclick="deshacerImport()">Deshacer última importación</button>`:''}</div>
-    <div class="dz" id="dz" style="margin-top:12px" onclick="$('#fimp').click()"><div style="font-size:40px">📄</div><b>Arrastrá el archivo acá o hacé clic para elegirlo</b><div class="muted">Excel (.xlsx/.xls), CSV o PDF. Nada se guarda hasta que confirmes en la vista previa.</div><input type="file" id="fimp" accept=".xlsx,.xls,.csv,.pdf" style="display:none"></div>
+    <div class="dz" id="dz" style="margin-top:12px" onclick="$('#fimp').click()"><div style="font-size:40px">📄</div><b>Arrastrá el archivo acá o hacé clic para elegirlo</b><div class="muted">Excel (.xlsx/.xls), CSV, Word (.docx) o PDF. Nada se guarda hasta que confirmes en la vista previa.</div><input type="file" id="fimp" accept=".xlsx,.xls,.csv,.pdf,.docx" style="display:none"></div>
     <div id="impEstado" style="margin-top:10px"></div>
     <p class="muted">Consejo: el CSV es el formato más confiable y funciona sin internet. Los PDF impresos como imagen (por ejemplo, con "Microsoft Print to PDF") se leen con reconocimiento de texto (OCR), que tarda más y puede equivocarse: revisá siempre la vista previa.</p></div>
   <h3>Historial de importaciones</h3>
   <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Fecha</th><th>Archivo</th><th>Período</th><th class="num">Registros</th><th>Estado</th></tr></thead><tbody>
-  ${DB.importaciones.slice().reverse().map(i=>`<tr><td>${new Date(i.fecha).toLocaleString('es-AR')}</td><td>${h(i.archivo)}</td><td>${h(i.periodo)}</td><td class="num">${i.cantidad}</td><td>${i.deshecha?'<span class="tag">Deshecha</span>':`<span class="tag v">${i.creadas.length} nuevas · ${i.actualizadas.length} actualizadas</span>`}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Todavía no se importó nada.</td></tr>'}</tbody></table></div>`;
+  ${impsL.slice().reverse().map(i=>`<tr><td>${new Date(i.fecha).toLocaleString('es-AR')}</td><td>${h(i.archivo)}</td><td>${h(i.periodo)}</td><td class="num">${i.cantidad}</td><td>${i.deshecha?'<span class="tag">Deshecha</span>':`<span class="tag v">${i.creadas.length} nuevas · ${i.actualizadas.length} actualizadas</span>`}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">Todavía no se importó nada.</td></tr>'}</tbody></table></div>`;
 }
 function initDropzone(){
   const dz = $('#dz'), fi = $('#fimp'); if (!dz) return;
@@ -1126,7 +1183,7 @@ async function procesarArchivo(file){
 // --- Reconocimiento de columnas ---
 const ROLES = [
   ['', '(ignorar)'], ['nombre','Apellido y nombre'], ['dni','DNI / Legajo'], ['disp','Días disponibles'], ['usados','Días usados'], ['rest','Días restantes'],
-  ['franja','Franja (inicio - fin)'], ['desde','Fecha desde'], ['hasta','Fecha hasta'], ['periodo','Período / Año']
+  ['guardia','Guardia'], ['franja','Franja (inicio - fin)'], ['desde','Fecha desde'], ['hasta','Fecha hasta'], ['periodo','Período / Año']
 ];
 function rolDe(enc){
   const e = norm(enc);
@@ -1140,6 +1197,7 @@ function rolDe(enc){
   if (/^(hasta|fin|fecha hasta|fecha fin)/.test(e) || /hasta/.test(e)) return 'hasta';
   if (/apellido|nombre|agente|efectivo/.test(e)) return 'nombre';
   if (/dni|legajo|documento/.test(e)) return 'dni';
+  if (/^guardia$/.test(e)) return 'guardia';
   if (/restante|pendiente|saldo/.test(e)) return 'rest';
   if (/usad|tomad|gozad/.test(e)) return 'usados';
   if (/disponible|corresponde|dias|total/.test(e)) return 'disp';
@@ -1165,6 +1223,7 @@ function aplicarMapeo(){
     roles.forEach((rol,i)=>{ const v = r[i];
       if (rol==='nombre') o.nombre += ' ' + String(v||'');
       else if (rol==='dni') o.dni = String(v||'').trim();
+      else if (rol==='guardia') o.guardia = String(v||'').toUpperCase().replace(/GUARDIA|\s|"/g,'');
       else if (['disp','usados','rest'].includes(rol)){ const x = parseFloat(String(v).replace(',','.')); if (!isNaN(x)) o[rol] = x; }
       else if (rol==='franja') o.franjas.push(...franjasDeTexto(v));
       else if (rol==='desde') ds.push(parseFecha(v)); else if (rol==='hasta') hs.push(parseFecha(v));
@@ -1285,7 +1344,7 @@ function cruzar(o){
 function vistaPrevia(filas, archivo, periodo){
   const items = filas.map((o,i)=>{
     const c = cruzar(o);
-    const it = {...o, i, ...c, accion: c.estado==='no'?'nueva':'importar', guardia: 'A', periodo: o.periodo || periodo};
+    const it = {...o, i, ...c, accion: c.estado==='no'?'nueva':'importar', guardia: GUARDIAS.includes(o.guardia) ? o.guardia : (F.g || 'A'), periodo: o.periodo || periodo};
     return it;
   });
   window._imp = {items, archivo, periodo};
@@ -1361,20 +1420,17 @@ async function confirmarImport(){
   UI.licTab = 'listado'; render(); toast('Importación terminada: ' + res, 'ok');
 }
 async function deshacerImport(){
-  const r = DB.importaciones.filter(i=>!i.deshecha).pop(); if (!r) return;
+  const r = DB.importaciones.filter(i=>!i.modulo && !i.deshecha).pop(); if (!r) return;
   if (!(await confirmar(`¿Deshacer la importación de "${r.archivo}" del ${new Date(r.fecha).toLocaleString('es-AR')}?`))) return;
   DB.licencias = DB.licencias.filter(l=>!r.creadas.includes(l.id));
   r.actualizadas.forEach(u=>{ const i = DB.licencias.findIndex(l=>l.id===u.id); if (i>=0) DB.licencias[i] = u.prev; });
   DB.personal = DB.personal.filter(p=>!r.personas.includes(p.id) || DB.licencias.some(l=>l.personaId===p.id));
   r.deshecha = true; save(); render(); toast('Importación deshecha','ok');
 }
-async function planillaModelo(){
-  const enc = ['APELLIDO Y NOMBRE','DNI','GUARDIA','DÍAS DISPONIBLES','DÍAS USADOS','DÍAS RESTANTES','1ª FRANJA (INICIO - FIN)','2ª FRANJA (INICIO - FIN)','3ª FRANJA (INICIO - FIN)'];
-  const ej = ['PEREZ JUAN','30111222','A',20,20,0,'05/01/2027 - 16/01/2027','01/03/2027 - 12/03/2027',''];
-  try{ await cargarLib(LIBS.xlsx); const ws = XLSX.utils.aoa_to_sheet([enc, ej]); ws['!cols'] = enc.map((e,i)=>({wch: i===0?28:i>5?26:14})); const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Licencias'); XLSX.writeFile(wb, 'planilla_modelo_licencias.xlsx'); }
-  catch(e){ exportCSV('planilla_modelo_licencias.csv', [enc, ej]); toast('Sin internet: se descargó la planilla modelo en CSV (se abre con Excel).'); }
+function planillaModelo(){
+  descargarXLSX('planilla_modelo_licencias.xlsx', [['APELLIDO Y NOMBRE','DNI','GUARDIA','DÍAS DISPONIBLES','DÍAS USADOS','DÍAS RESTANTES','1ª FRANJA (INICIO - FIN)','2ª FRANJA (INICIO - FIN)','3ª FRANJA (INICIO - FIN)','4ª FRANJA (INICIO - FIN)'],
+    ['PEREZ JUAN','30111222','A',20,20,0,'05/01/2027 - 16/01/2027','01/03/2027 - 12/03/2027','','']], 'Licencias', [30,12,10,14,14,14,26,26,26,26]);
 }
-
 /* =====================================================
    12. VISTA: CAPACITACIONES
    ===================================================== */
@@ -1398,7 +1454,7 @@ function vCapacitaciones(){
   }
   return `<h1>Capacitaciones</h1>
   ${barra('capacitaciones')}
-  <div class="row noprint" style="margin-bottom:10px"><button class="btn p" onclick="editarCap()">+ Nueva capacitación</button><button class="btn" onclick="imprimir()">Imprimir</button></div>
+  <div class="row noprint" style="margin-bottom:10px"><button class="btn p" onclick="editarCap()">+ Nueva capacitación</button>${btnImport('capacitaciones')}<button class="btn" onclick="imprimir()">Imprimir</button></div>
   <div class="tabs noprint">${[['lista','Todas'],['persona','Por persona'],['oblig','Obligatorias pendientes']].map(([k,t])=>`<button class="${k===tab?'act':''}" onclick="UI.capTab='${k}';render()">${t}</button>`).join('')}</div>
   ${printHead('Capacitaciones')}${cuerpo}${printFoot()}`;
 }
@@ -1446,12 +1502,13 @@ function vCarpetas(){
   const y = t.slice(0,4), m = t.slice(0,7);
   const tot = {}; DB.carpetas.filter(c=>pasaId(c.personaId)).forEach(c=>{ const o = tot[c.personaId] = tot[c.personaId] || {n:0, dm:0, dy:0}; if (c.inicio.startsWith(y)) o.n++; for (let f=c.inicio; f<=finCarpeta(c); f=addD(f,1)){ if (f.startsWith(m)) o.dm++; if (f.startsWith(y)) o.dy++; } });
   const tabla = arr => `<div class="tbl-wrap"><table class="tbl"><thead><tr><th>Persona</th><th>Desde</th><th>Hasta</th><th>Reincorpora</th><th class="num">Días</th><th>Tipo</th><th>Certificado</th><th>Obs.</th><th class="noprint"></th></tr></thead><tbody>
-  ${arr.map(c=>`<tr><td>${h(nombreP(c.personaId))}</td><td>${fmt(c.inicio)}</td><td>${fmt(finCarpeta(c))}</td><td>${fmt(addD(finCarpeta(c),1))}</td><td class="num">${c.dias}</td><td>${h(c.tipo)}</td><td>${c.presento?'<span class="tag v">Presentado</span>':'<span class="tag r">Pendiente</span>'} ${h(c.nroCert)}</td><td>${h(c.obs)}</td><td class="noprint"><button class="btn s" onclick="editarCarpeta('${c.id}')">Editar</button></td></tr>`).join('') || '<tr><td colspan="9" class="muted">Sin registros.</td></tr>'}</tbody></table></div>`;
+  ${arr.map(c=>`<tr><td>${h(nombreP(c.personaId))}${badgeLM(c)?'<br>'+badgeLM(c):''}</td><td>${fmt(c.inicio)}</td><td>${fmt(finCarpeta(c))}</td><td>${fmt(addD(finCarpeta(c),1))}</td><td class="num">${c.dias}</td><td>${h(c.tipo)}</td><td>${c.presento?'<span class="tag v">Presentado</span>':'<span class="tag r">Pendiente</span>'} ${h(c.nroCert)}</td><td>${h(c.obs)}</td><td class="noprint"><button class="btn s" onclick="editarCarpeta('${c.id}')">Editar</button></td></tr>`).join('') || '<tr><td colspan="9" class="muted">Sin registros.</td></tr>'}</tbody></table></div>`;
   const totArr = Object.entries(tot).filter(([,o])=>o.dy).sort((a,b)=>b[1].dy-a[1].dy);
   return `<h1>Carpetas médicas</h1>
   ${barra('carpetas', `<div><label>Año</label><input style="width:90px" value="${filtroCanio}" placeholder="Todos" onchange="filtroCanio=this.value;render()"></div>`)}
-  <div class="row noprint" style="margin-bottom:10px"><button class="btn p" onclick="editarCarpeta()">+ Nueva carpeta médica</button>
+  <div class="row noprint" style="margin-bottom:10px"><button class="btn p" onclick="editarCarpeta()">+ Nueva carpeta médica</button>${btnImport('carpetas')}
     <button class="btn" onclick="exportCSV('carpetas_medicas.csv',[['Persona','Guardia','Desde','Hasta','Días','Tipo','Certificado','N.º','Obs.'],...DB.carpetas.filter(c=>pasaId(c.personaId)).map(c=>[nombreP(c.personaId),persona(c.personaId)?.guardia,fmt(c.inicio),fmt(finCarpeta(c)),c.dias,c.tipo,c.presento?'Presentado':'Pendiente',c.nroCert,c.obs])])">Exportar CSV</button><button class="btn" onclick="imprimir()">Imprimir</button></div>
+  ${(()=>{ const pend = lmPendientes(new Set(DB.personal.filter(pasa).map(p=>p.id))); return pend.length ? `<div class="err"><b>⚠ Licencias médicas pendientes de homologar en Córdoba (${pend.length})</b> – más de ${umbralLM()} días de carpeta seguidos.<div style="margin-top:6px">${pend.map(({p,e})=>`<div class="lst-item"><span><b>${h(p.nombre)}</b> (Guardia ${p.guardia}) · ${fmt(e.ini)} al ${fmt(e.fin)} · ${e.dias} días · <span class="tag a">${e.homo}${e.ref.homoFecha?' '+fmt(e.ref.homoFecha):''}</span></span><button class="btn s" onclick="editarCarpeta('${e.ref.id}')">Actualizar</button></div>`).join('')}</div></div>` : ''; })()}
   <div class="card"><h3 style="margin-top:0">De carpeta médica hoy (${act.length})</h3>${act.length?act.map(c=>`<span class="tag r" style="margin:3px">${h(nombreP(c.personaId))} – vuelve el ${fmt(addD(finCarpeta(c),1))}</span>`).join(''):'<span class="muted">Nadie.</span>'}</div>
   ${printHead('Carpetas médicas')}
   ${gsVisibles().map(g=>{ const arr = lista.filter(c=>persona(c.personaId)?.guardia===g); return grupo('car-'+g, tituloG(g), arr.length, tabla(arr)); }).join('')}
@@ -1459,6 +1516,18 @@ function vCarpetas(){
   ${totArr.map(([pid,o])=>`<tr><td>${h(nombreP(pid))}</td><td>${persona(pid)?.guardia||''}</td><td class="num">${o.n}</td><td class="num">${o.dm}</td><td class="num">${o.dy}</td></tr>`).join('') || '<tr><td colspan="5" class="muted">—</td></tr>'}</tbody></table></div>`)}
   ${printFoot()}`;
 }
+/* ---------- Licencia médica: más de 10 días de carpeta (seguidos) ---------- */
+const umbralLM = () => +DB.config.diasLicMedica || 10;
+const ESTADOS_HOMO = ['Pendiente','Turno asignado','Homologada'];
+function episodios(pid){ // carpetas seguidas (una empieza al día siguiente de que termina la otra) se suman
+  const cs = DB.carpetas.filter(c=>c.personaId===pid).sort((a,b)=>a.inicio.localeCompare(b.inicio)); const eps = []; let cur = null;
+  cs.forEach(c => { const f = finCarpeta(c); if (cur && c.inicio <= addD(cur.fin,1)){ cur.cs.push(c); if (f > cur.fin) cur.fin = f; } else { cur = {cs:[c], ini:c.inicio, fin:f}; eps.push(cur); } });
+  eps.forEach(e => { e.dias = diffD(e.ini,e.fin)+1; e.lm = e.dias > umbralLM(); const hs = e.cs.map(c=>c.homo).filter(Boolean); e.homo = hs.sort((a,b)=>ESTADOS_HOMO.indexOf(b)-ESTADOS_HOMO.indexOf(a))[0] || (e.lm?'Pendiente':''); e.ref = e.cs.find(c=>c.homo) || e.cs[e.cs.length-1]; });
+  return eps;
+}
+const episodioDe = c => episodios(c.personaId).find(e => e.cs.some(x=>x.id===c.id));
+const lmPendientes = (ids) => DB.personal.filter(p=>!ids || ids.has(p.id)).flatMap(p => episodios(p.id).filter(e => e.lm && e.homo !== 'Homologada').map(e => ({p, e})));
+function badgeLM(c){ const e = episodioDe(c); if (!e || !e.lm) return ''; return `<span class="tag r">Licencia médica · ${e.dias} días</span> <span class="tag ${e.homo==='Homologada'?'v':'a'}">Homologación: ${e.homo}${e.ref.homoFecha?' '+fmt(e.ref.homoFecha):''}</span>`; }
 function editarCarpeta(id, pre={}){
   const c = id ? DB.carpetas.find(x=>x.id===id) : {personaId:pre.personaId||'', inicio:pre.inicio||hoy(), dias:1, tipo:'Enfermedad', nroCert:'', presento:false, obs:''};
   modal(`<h2>${id?'Editar':'Nueva'} carpeta médica</h2><div class="grid g2">
@@ -1471,16 +1540,33 @@ function editarCarpeta(id, pre={}){
   <div class="f"><label>N.º de certificado</label><input id="mn" value="${h(c.nroCert)}"></div>
   <div class="f"><label>&nbsp;</label><label><input type="checkbox" id="mpr" ${c.presento?'checked':''}> Presentó el certificado</label></div></div>
   <div class="f"><label>Observaciones (sin diagnóstico)</label><input id="mo" value="${h(c.obs)}"></div>
+  <div id="mLM" style="display:none"><div class="err" style="margin-bottom:8px"><b>⚠ <span id="mLMt"></span></b><br>Pasa a ser <b>licencia médica</b>: el efectivo tiene que ir a Córdoba a realizar la homologación.</div>
+    <div class="grid g3"><div class="f"><label>Homologación</label><select id="mhe">${ESTADOS_HOMO.map(x=>`<option ${x===(c.homo||'Pendiente')?'selected':''}>${x}</option>`).join('')}</select></div>
+    <div class="f"><label>Fecha del turno / homologación</label><input type="date" id="mhf" value="${h(c.homoFecha||'')}"></div>
+    <div class="f"><label>N.º de expediente / constancia</label><input id="mhx" value="${h(c.homoExp||'')}"></div></div></div>
   <div class="acc">${id?`<button class="btn" style="margin-right:auto" onclick="borrarCarpeta('${id}')">Eliminar</button>`:''}<button class="btn" onclick="cerrarModal()">Cancelar</button><button class="btn p" onclick="guardarCarpeta('${id||''}')">Guardar</button></div>`);
-  mFin();
+  window._cEd = id || ''; $('#mp').onchange = mLM; mFin();
 }
-function mFin(){ const i = val('mi'), d = Math.max(1, +val('md')||1); if (!i) return; const f = addD(i, d-1); $('#mf').value = f; $('#mr').textContent = fmt(addD(f,1)); }
-function mDias(){ const i = val('mi'), f = val('mf'); if (i && f && f>=i){ $('#md').value = diffD(i,f)+1; $('#mr').textContent = fmt(addD(f,1)); } }
+function mFin(){ const i = val('mi'), d = Math.max(1, +val('md')||1); if (!i) return; const f = addD(i, d-1); $('#mf').value = f; $('#mr').textContent = fmt(addD(f,1)); mLM(); }
+function mDias(){ const i = val('mi'), f = val('mf'); if (i && f && f>=i){ $('#md').value = diffD(i,f)+1; $('#mr').textContent = fmt(addD(f,1)); } mLM(); }
+function mLM(){ // calcula si con esta carpeta (y las seguidas) supera el límite
+  const pid = val('mp'), i = val('mi'), d = Math.max(1, +val('md')||1), box = $('#mLM'); if (!box || !i) return;
+  const otras = DB.carpetas.filter(c=>c.personaId===pid && c.id!==window._cEd);
+  let ini = i, fin = addD(i, d-1), cambio = true;
+  while (cambio){ cambio = false; otras.forEach(c => { const f = finCarpeta(c); if (c.inicio <= addD(fin,1) && f >= addD(ini,-1) && (c.inicio < ini || f > fin)){ if (c.inicio < ini) ini = c.inicio; if (f > fin) fin = f; cambio = true; } }); }
+  const tot = diffD(ini, fin) + 1; const lm = tot > umbralLM();
+  box.style.display = lm ? 'block' : 'none';
+  if (lm) $('#mLMt').textContent = tot > d ? `Con las carpetas seguidas suma ${tot} días (más de ${umbralLM()}).` : `Son ${tot} días (más de ${umbralLM()}).`;
+  window._cLM = lm;
+}
 function guardarCarpeta(id){
   if (!val('mp')) return alert('Elegí la persona');
   let c = id ? DB.carpetas.find(x=>x.id===id) : null; if (!c){ c = {id:uid()}; DB.carpetas.push(c); }
   Object.assign(c, {personaId:val('mp'), tipo:val('mt'), inicio:val('mi'), dias:Math.max(1,+val('md')||1), nroCert:val('mn'), presento:$('#mpr').checked, obs:val('mo')});
-  save(); cerrarModal(); render(); toast('Carpeta médica guardada','ok');
+  if (window._cLM){ c.homo = val('mhe') || 'Pendiente'; c.homoFecha = val('mhf'); c.homoExp = val('mhx'); } else { delete c.homo; delete c.homoFecha; delete c.homoExp; }
+  save(); cerrarModal(); render();
+  if (window._cLM && c.homo !== 'Homologada') toast(`${nombreP(c.personaId)}: supera ${umbralLM()} días, es licencia médica. Tiene que homologarla en Córdoba (estado: ${c.homo}).`, 'e');
+  else toast('Carpeta médica guardada','ok');
 }
 async function borrarCarpeta(id){ if (!(await confirmar('¿Eliminar esta carpeta médica?'))) return; DB.carpetas = DB.carpetas.filter(x=>x.id!==id); save(); cerrarModal(); render(); }
 
@@ -1646,7 +1732,7 @@ function infHoras(c, ps){
       ${rank.length?graf('Personas con más horas extras','Top 10 del período', gBarrasH(rank.map(([pid,m])=>({l:nombreP(pid), v:m/60, c:COL_G[persona(pid)?.guardia]})), {fmt:v=>fN(v)+' h'}), leyendaG(gs)):''}`)
   + sec('Saldos actuales por persona', tablaH(['Apellido y nombre','G','Horas del período','Acumulado total','Francos ganados','Tomados','Disponibles','Falta para el próximo'],
       sal.map(({p,s})=>[esc(p.nombre),p.guardia,porP[p.id]?fH(porP[p.id]):'',minHM(s.min),s.ganados,s.tomados,s.disp>0?`<b>${s.disp}</b>`:s.disp,minHM(s.resto)]), {num:[2,3,4,5,6,7]}))
-  + (c.pid ? sec('Formularios del período', tablaH(['Fecha','Tipo','Horario','Tiempo','Motivo','Autorizó'], hs.sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(x=>[fmt(x.fecha),tipoHora(x.tipo),`${x.desde} a ${x.hasta}`,minHM(x.min),esc(x.motivo),esc(x.autorizo)]))) : '')
+  + (c.pid ? sec('Formularios del período', tablaH(['Fecha','Tipo','Horario','Tiempo','Motivo','Autorizó'], hs.sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(x=>[fmt(x.fecha),tipoHora(x.tipo),horarioH(x),minHM(x.min),esc(x.motivo),esc(x.autorizo)]))) : '')
   + `<div class="h-def">Cada 24 h de horas extras acumuladas equivalen a 1 franco compensatorio. Los saldos son al día de emisión.</div>`;
 }
 function infFrancos(c, ps){
@@ -1721,17 +1807,20 @@ function infCarpetas(c, ps){
   const pend = cs.filter(x=>!x.presento); const hoyA = cs.filter(x=>inRange(hoy(),x.inicio,finCarpeta(x)));
   const diasMes = k => cs.reduce((n,x)=>n+diasCruce(x.inicio, finCarpeta(x), k+'-01', iso(new Date(Date.UTC(+k.slice(0,4), +k.slice(5,7), 0)))),0);
   const tipoTop = Object.entries(porTipo).sort((a,b)=>b[1]-a[1])[0];
+  const lmE = ps.flatMap(p => episodios(p.id).filter(e => e.lm && e.ini <= c.hasta && e.fin >= c.desde).map(e => ({p, e})));
   return sec('Resumen ejecutivo', resumen([
+    lmE.length ? `<b>${lmE.length}</b> carpeta(s) superaron ${umbralLM()} días y pasaron a ser <b>licencia médica</b>: ${lmE.filter(x=>x.e.homo==='Homologada').length} homologada(s) y <b>${lmE.filter(x=>x.e.homo!=='Homologada').length} pendiente(s)</b> de homologar en Córdoba.` : '',
     cs.length ? `Se registraron <b>${cs.length}</b> carpetas médicas que suman <b>${dias}</b> días de ausencia dentro del período (${fN(dias/Math.max(1,ps.length))} días promedio por persona).` : 'No hubo carpetas médicas en el período.',
     tipoTop ? `Tipo más frecuente: <b>${esc(tipoTop[0])}</b> (${tipoTop[1]} días, ${fP(pct(tipoTop[1],dias))}).` : '',
     pend.length ? `Hay <b>${pend.length}</b> certificado(s) médico(s) pendiente(s) de presentar.` : 'Todos los certificados fueron presentados.',
     hoyA.length ? `Hoy hay <b>${hoyA.length}</b> persona(s) de carpeta médica.` : ''
   ]))
-  + sec('Indicadores', kpis([[cs.length,'Carpetas médicas'],[dias,'Días de ausencia'],[Object.keys(porP).length,'Personas con carpeta'],[pend.length,'Certificados pendientes']]))
+  + sec('Indicadores', kpis([[cs.length,'Carpetas médicas'],[dias,'Días de ausencia'],[lmE.length,`Licencias médicas (más de ${umbralLM()} días)`],[pend.length,'Certificados pendientes']]))
   + sec('Gráficos', `<div class="h-dos">${porG.length>1?graf('Días de carpeta médica por guardia','Días dentro del período', gBarrasV(porG.map(x=>({l:'Guardia '+x.g, v:x.v, c:COL_G[x.g]})))):''}
       ${graf('Días por tipo','', gBarrasH(Object.entries(porTipo).sort((a,b)=>b[1]-a[1]).map(([k,v])=>({l:k, v})), {w:380, L:170}))}
       ${meses.length>1?graf('Días de carpeta médica por mes','', gBarrasV(meses.map(k=>({l:mesCorto(k), v:diasMes(k)})))):''}</div>
       ${rank.length>1?graf('Personas con más días de carpeta','Top 10 del período', gBarrasH(rank.map(([pid,v])=>({l:nombreP(pid), v, c:COL_G[persona(pid)?.guardia]}))), leyendaG(gs)):''}`)
+  + (lmE.length ? sec(`Licencias médicas (más de ${umbralLM()} días) – Homologación`, tablaH(['Apellido y nombre','G','Desde','Hasta','Días','Homologación','Fecha turno','Expediente'], lmE.map(({p,e})=>[esc(p.nombre),p.guardia,fmt(e.ini),fmt(e.fin),e.dias,e.homo==='Homologada'?'Homologada':`<b>${e.homo}</b>`,fmt(e.ref.homoFecha||''),esc(e.ref.homoExp||'')]), {num:[4]})) : '')
   + sec('Detalle de carpetas médicas', tablaH(['Apellido y nombre','G','Desde','Hasta','Días','Tipo','Certificado'], cs.sort((a,b)=>a.inicio.localeCompare(b.inicio)).map(x=>[esc(nombreP(x.personaId)),persona(x.personaId)?.guardia||'',fmt(x.inicio),fmt(finCarpeta(x)),x.dias,esc(x.tipo),x.presento?'Presentado':'<b>Pendiente</b>']), {num:[4]}))
   + `<div class="h-def">Los días se cuentan corridos y solo dentro del período del informe. No se registran diagnósticos.</div>`;
 }
@@ -1791,7 +1880,7 @@ function infPersona(c, ps){
   + sec('Indicadores del período', kpis([[x.reg?fP(x.pres):'—','Presentismo'],[fH(hs.reduce((n,y)=>n+y.min,0)),'Horas extras'],[fr.length,'Francos tomados'],[s.disp,'Francos disponibles hoy'],[cs.reduce((n,y)=>n+y.dr,0),'Días de carpeta médica'],[la,'Días de licencia anual'],[caps.length,'Capacitaciones'],[minHM(s.resto),'Falta para el próximo franco']]))
   + (meses.length>1 ? sec('Horas extras por mes', graf('', '', gBarrasV(meses.map(k=>({l:mesCorto(k), v:hs.filter(y=>y.fecha.startsWith(k)).reduce((n,y)=>n+y.min,0)/60})), {fmt:v=>fN(v)+' h', h:200, w:600}))) : '')
   + sec('Asistencia', `<div>${Object.entries(r[p.id]).map(([k,v])=>`<b>${esc(k)}</b> ${esc(codigo(k)?.nombre||'')}: ${v}`).join(' · ') || 'Sin registros.'}</div>`)
-  + sec('Formularios de horas extras', tablaH(['Fecha','Tipo','Horario','Tiempo','Motivo'], hs.sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(y=>[fmt(y.fecha),tipoHora(y.tipo),`${y.desde} a ${y.hasta}`,minHM(y.min),esc(y.motivo)])))
+  + sec('Formularios de horas extras', tablaH(['Fecha','Tipo','Horario','Tiempo','Motivo'], hs.sort((a,b)=>a.fecha.localeCompare(b.fecha)).map(y=>[fmt(y.fecha),tipoHora(y.tipo),horarioH(y),minHM(y.min),esc(y.motivo)])))
   + sec('Francos tomados', tablaH(['Fecha','Observaciones'], fr.map(y=>[fmt(y.fecha), esc(y.obs)+(y.forzado?' (sin saldo)':'')])))
   + sec('Carpetas médicas', tablaH(['Desde','Hasta','Días','Tipo','Certificado'], cs.map(y=>[fmt(y.inicio),fmt(finCarpeta(y)),y.dias,esc(y.tipo),y.presento?'Presentado':'Pendiente'])))
   + sec('Licencia anual', DB.licencias.filter(l=>l.personaId===p.id).map(l=>{ const k = licDe(l); return `<div><b>${esc(l.periodo)}</b>: ${l.disponibles} disponibles · ${k.usados} usados · ${k.restantes} restantes — ${l.franjas.map(f=>`${fmt(f.desde)} a ${fmt(f.hasta)}`).join(' · ')}</div>`; }).join('') || '<div class="h-vacio">Sin licencias cargadas.</div>')
@@ -1898,7 +1987,9 @@ function vConfig(){
     <div class="f" style="grid-column:1/-1"><label>Nombre de la institución (encabezados e impresiones)</label><input id="cfI" value="${h(c.institucion)}"></div>
     ${GUARDIAS.map(g=>`<div class="f"><label>Un día que trabajó la Guardia ${g}</label><input type="date" id="cfR${g}" value="${c.rotacion[g]||''}"></div>`).join('')}
     <div class="f"><label>Mínimo de presentes por guardia</label><input type="number" id="cfMin" value="${c.minPresentes}"></div>
-    <div class="f"><label>Máximo de licencias a la vez por guardia</label><input type="number" id="cfMax" value="${c.maxLicencia}"></div></div>
+    <div class="f"><label>Máximo de licencias a la vez por guardia</label><input type="number" id="cfMax" value="${c.maxLicencia}"></div>
+    <div class="f"><label>Hora de cambio de guardia</label><input type="time" id="cfHG" value="${c.horaGuardia||'08:00'}"></div>
+    <div class="f"><label>Días de carpeta para licencia médica (más de…)</label><input type="number" id="cfLM" value="${c.diasLicMedica||10}"></div></div>
     <p class="muted">Con una fecha por guardia alcanza: el sistema calcula el resto cada 3 días. Hoy (${fmt(hoy())}) le toca a la <b>Guardia ${guardiaDelDia(hoy())||'?'}</b>.</p>
     <button class="btn p" onclick="guardarConfig()">Guardar</button></div>
   <div class="card"><h2 style="margin-top:0">Códigos de asistencia</h2>
@@ -1914,7 +2005,7 @@ function vConfig(){
     <textarea id="cfF" style="min-height:220px;font-family:monospace">${c.feriados.slice().sort().map(fmt).join('\n')}</textarea>
     <button class="btn p" onclick="guardarFeriados()">Guardar feriados</button></div>`;
 }
-function guardarConfig(){ const c = DB.config; c.institucion = val('cfI').trim()||c.institucion; GUARDIAS.forEach(g=>c.rotacion[g]=val('cfR'+g)); c.minPresentes = +val('cfMin')||0; c.maxLicencia = +val('cfMax')||0; save(); render(); toast('Configuración guardada','ok'); }
+function guardarConfig(){ const c = DB.config; c.institucion = val('cfI').trim()||c.institucion; GUARDIAS.forEach(g=>c.rotacion[g]=val('cfR'+g)); c.minPresentes = +val('cfMin')||0; c.maxLicencia = +val('cfMax')||0; c.horaGuardia = val('cfHG')||'08:00'; c.diasLicMedica = +val('cfLM')||10; save(); render(); toast('Configuración guardada','ok'); }
 function codSet(i,k,v){ DB.config.codigos[i][k] = k==='sigla'?v.trim().toUpperCase():k==='tecla'?v.toLowerCase():v; save(); render(); }
 function codAdd(){ DB.config.codigos.splice(DB.config.codigos.length-1, 0, {sigla:'NUEVO', nombre:'Nuevo código', color:'#e5e7eb', texto:'#111827', tecla:''}); save(); render(); }
 function codDel(i){ DB.config.codigos.splice(i,1); save(); render(); }
@@ -1942,18 +2033,505 @@ async function borrarTodo(){
   if (t !== 'BORRAR') return toast('No se borró nada');
   const cfg = DB.config; DB = datosIniciales(); ['personal','horas','capacitaciones','carpetas','novedades'].forEach(k=>DB[k]=[]); DB.config = cfg; save(); render();
 }
-function migrar(d){ const b = datosIniciales(); for (const k of Object.keys(b)) if (d[k]==null) d[k] = b[k]; d.config = {...b.config, ...d.config}; return d; }
+function migrar(d){ const b = datosIniciales(); for (const k of Object.keys(b)) if (d[k]==null) d[k] = b[k]; d.config = {...b.config, ...d.config}; if (!d.config.v3){ if (!d.config.feriados.includes('2027-06-21')) d.config.feriados.push('2027-06-21'); d.config.feriados.sort(); d.config.v3 = true; } return d; }
 
 /* =====================================================
    17. VISTA: ACERCA DE
    ===================================================== */
 function vAcerca(){
   return `<div class="card acerca"><img src="logo-etac.jpg" alt="ETAC" onerror="logoFallback(this,'ETAC')"><img src="logo-jmm.png" alt="JMM" onerror="logoFallback(this,'JMM')">
-  <h1>Sistema de Gestión de Personal</h1><p>${h(DB.config.institucion)}</p><p><b>Versión 2.0</b> – Noviembre 2026</p>
+  <h1>Sistema de Gestión de Personal</h1><p>${h(DB.config.institucion)}</p><p><b>Versión 3.0</b> – Noviembre 2026</p>
   <p>Autor: <b>Maldonado Jorge Matias – JMM Gestiones y Tecnologías</b></p>
   <p><a class="btn p" href="https://wa.me/543541633175" target="_blank" rel="noopener">WhatsApp 3541 633175</a> <a class="btn" href="mailto:jorgematiasmaldonado@gmail.com">jorgematiasmaldonado@gmail.com</a></p>
   <p class="muted">Los datos se guardan únicamente en este navegador. Hacé copias de seguridad desde Configuración.</p></div>`;
 }
+
+/* =====================================================
+   19. LECTURA Y ESCRITURA DE ARCHIVOS SIN INTERNET
+   Excel (.xlsx) y Word (.docx) son archivos ZIP: se abren con
+   el descompresor que trae el navegador. Solo .xls (viejo) y el
+   reconocimiento de texto de PDF escaneados necesitan internet.
+   ===================================================== */
+async function unzip(buf){
+  const dv = new DataView(buf);
+  let e = buf.byteLength - 22; while (e >= 0 && dv.getUint32(e, true) !== 0x06054b50) e--;
+  if (e < 0) throw new Error('El archivo está dañado o no es un .xlsx / .docx válido.');
+  const n = dv.getUint16(e+10, true); let p = dv.getUint32(e+16, true); const files = {};
+  for (let i=0; i<n; i++){
+    const comp = dv.getUint16(p+10,true), csize = dv.getUint32(p+20,true), nl = dv.getUint16(p+28,true), xl = dv.getUint16(p+30,true), cl = dv.getUint16(p+32,true), off = dv.getUint32(p+42,true);
+    files[new TextDecoder().decode(new Uint8Array(buf, p+46, nl))] = {comp, csize, off}; p += 46+nl+xl+cl;
+  }
+  return { async text(k){ const f = files[k]; if (!f) return null;
+    const data = new Uint8Array(buf, f.off+30+dv.getUint16(f.off+26,true)+dv.getUint16(f.off+28,true), f.csize);
+    if (f.comp === 0) return new TextDecoder().decode(data);
+    if (f.comp === 8){ if (typeof DecompressionStream === 'undefined') throw new Error('Este navegador es muy viejo para abrir el archivo. Actualizá Chrome o Edge.'); return await new Response(new Blob([data]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).text(); }
+    throw new Error('Formato de compresión no soportado.'); } };
+}
+const xmlDoc = s => new DOMParser().parseFromString(s, 'application/xml');
+const colIdx = ref => { let n = 0; for (const ch of ref.replace(/\d+/g,'')) n = n*26 + ch.charCodeAt(0) - 64; return n-1; };
+function excelFecha(n){
+  if (n < 1){ const m = Math.round(n*1440); return `${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; }
+  const ms = Math.round(n*MS); const f = fmt(iso(new Date(Date.UTC(1899,11,30) + Math.floor(n)*MS)));
+  const fr = n - Math.floor(n); if (fr > 0.0001){ const m = Math.round(fr*1440); return `${f} ${String(Math.floor(m/60)%24).padStart(2,'0')}:${String(m%60).padStart(2,'0')}`; }
+  return f;
+}
+async function leerXLSX(buf){
+  const z = await unzip(buf);
+  const ss = []; const sst = await z.text('xl/sharedStrings.xml');
+  if (sst) Array.from(xmlDoc(sst).getElementsByTagName('si')).forEach(si => ss.push(Array.from(si.getElementsByTagName('t')).map(t=>t.textContent).join('')));
+  let path = 'xl/worksheets/sheet1.xml';
+  try{
+    const wb = xmlDoc(await z.text('xl/workbook.xml')); const s1 = wb.getElementsByTagName('sheet')[0];
+    const rid = s1.getAttribute('r:id') || s1.getAttributeNS('http://schemas.openxmlformats.org/officeDocument/2006/relationships','id');
+    const r = Array.from(xmlDoc(await z.text('xl/_rels/workbook.xml.rels')).getElementsByTagName('Relationship')).find(x=>x.getAttribute('Id')===rid);
+    if (r){ const t = r.getAttribute('Target'); path = t.startsWith('/') ? t.slice(1) : 'xl/' + t.replace(/^\.\//,''); }
+  }catch(e){}
+  const fechas = new Set(); const st = await z.text('xl/styles.xml');
+  if (st){ const sx = xmlDoc(st); const cust = {}; Array.from(sx.getElementsByTagName('numFmt')).forEach(nf=>cust[nf.getAttribute('numFmtId')] = nf.getAttribute('formatCode'));
+    const xfs = sx.getElementsByTagName('cellXfs')[0];
+    if (xfs) Array.from(xfs.getElementsByTagName('xf')).forEach((xf,i)=>{ const id = +xf.getAttribute('numFmtId'); const code = (cust[id]||'').replace(/\[[^\]]*\]|"[^"]*"/g,''); if ((id>=14&&id<=22)||(id>=45&&id<=47)||(code && /[dmyh]/i.test(code))) fechas.add(i); }); }
+  const xml = await z.text(path); if (!xml) throw new Error('No encontré la primera hoja del Excel.');
+  const rows = [];
+  Array.from(xmlDoc(xml).getElementsByTagName('row')).forEach(r => {
+    const arr = [];
+    Array.from(r.getElementsByTagName('c')).forEach(c => {
+      const t = c.getAttribute('t'), s = +c.getAttribute('s'), v = c.getElementsByTagName('v')[0]?.textContent; let val = '';
+      if (t==='s') val = ss[+v] ?? ''; else if (t==='inlineStr') val = Array.from(c.getElementsByTagName('t')).map(x=>x.textContent).join('');
+      else if (t==='str' || t==='e') val = v ?? ''; else if (t==='b') val = v==='1' ? 'Sí' : 'No';
+      else if (v != null && v !== ''){ val = +v; if (fechas.has(s)) val = excelFecha(val); }
+      arr[colIdx(c.getAttribute('r'))] = val;
+    });
+    rows[+r.getAttribute('r')-1] = Array.from(arr, x => x ?? '');
+  });
+  return Array.from(rows, r => r || []).filter(r => r.some(x => String(x).trim()));
+}
+async function leerDOCX(buf){
+  const z = await unzip(buf); const W = 'http://schemas.openxmlformats.org/wordprocessingml/2006/main';
+  const x = xmlDoc(await z.text('word/document.xml'));
+  const tbls = Array.from(x.getElementsByTagNameNS(W,'tbl')).filter(t => !t.parentNode.closest || !t.parentNode.closest('tbl'));
+  if (!tbls.length) throw new Error('El documento de Word no tiene tablas. Poné los datos en una tabla (o en Excel) y volvé a importarlo.');
+  const filas = [];
+  tbls.forEach(t => Array.from(t.getElementsByTagNameNS(W,'tr')).forEach(tr => {
+    const cells = Array.from(tr.childNodes).filter(n => n.localName==='tc').map(tc => Array.from(tc.getElementsByTagNameNS(W,'p')).map(p => Array.from(p.getElementsByTagNameNS(W,'t')).map(t=>t.textContent).join('')).join(' ').replace(/\s+/g,' ').trim());
+    filas.push(cells);
+  }));
+  return filas.filter(r => r.some(c => c));
+}
+// PDF genérico: arma filas y columnas según la posición del texto
+async function leerPDFGenerico(file, roles){
+  await cargarLib(LIBS.pdf); pdfjsLib.GlobalWorkerOptions.workerSrc = LIBS.pdfWorker;
+  const pdf = await pdfjsLib.getDocument({data: await file.arrayBuffer()}).promise;
+  let ws = [], texto = 0;
+  for (let n=1; n<=pdf.numPages; n++){ const pg = await pdf.getPage(n); const vp = pg.getViewport({scale:1}); const tc = await pg.getTextContent();
+    tc.items.forEach(it => { if (!it.str.trim()) return; texto += it.str.trim().length; ws.push({t:it.str.trim(), x:it.transform[4], y:vp.height-it.transform[5], w:it.width, h:Math.abs(it.transform[3])||10, page:n, W:vp.width}); }); }
+  let ocr = false;
+  if (texto < 40){
+    if (!(await confirmar('El PDF no tiene texto (es una imagen o un escaneo). ¿Leerlo con reconocimiento de texto (OCR)? Tarda 1 o 2 minutos, necesita internet la primera vez y puede equivocarse.'))) throw new Error('Importación cancelada.');
+    ws = (await ocrPDF(pdf)).map(w => ({...w, h: 24})); ocr = true;
+  }
+  const lineas = [];
+  ws.sort((a,b)=>a.page-b.page || a.y-b.y || a.x-b.x).forEach(w => { const l = lineas[lineas.length-1]; if (l && l.page===w.page && Math.abs(l.y-w.y) < Math.max(4, w.h*0.55)) l.ws.push(w); else lineas.push({page:w.page, y:w.y, ws:[w]}); });
+  let hi = lineas.findIndex(l => l.ws.filter(w => roles(w.t)).length >= 2);
+  if (hi < 0) hi = 0;
+  const head = lineas[hi].ws.sort((a,b)=>a.x-b.x); const W0 = head[0]?.W || 600;
+  const celdas = []; head.forEach(w => { const c = celdas[celdas.length-1]; if (c && w.x - (c.x2) < W0*0.012) { c.t += ' ' + w.t; c.x2 = w.x + w.w; } else celdas.push({t:w.t, x:w.x, x2:w.x+w.w}); });
+  const ini = celdas.map(c => c.x - W0*0.01);
+  const filas = [celdas.map(c => c.t)];
+  lineas.slice(hi+1).forEach(l => {
+    if (l.ws.map(w=>w.t).join(' ') === filas[0].join(' ')) return;
+    const r = celdas.map(() => ''); l.ws.sort((a,b)=>a.x-b.x).forEach(w => { let c = 0; ini.forEach((x,i)=>{ if (w.x + 1 >= x) c = i; }); r[c] = (r[c] ? r[c]+' ' : '') + w.t; });
+    const prev = filas[filas.length-1];
+    if (filas.length > 1 && r.filter(Boolean).length === 1 && r[0] && !/\d/.test(r[0])) prev[0] += ' ' + r[0]; // nombre cortado en dos renglones
+    else filas.push(r);
+  });
+  return {filas, ocr};
+}
+async function leerArchivoTabla(file, roles){
+  const ext = file.name.split('.').pop().toLowerCase();
+  if (ext==='csv' || ext==='txt') return {filas: parseCSV(await file.text())};
+  if (ext==='xlsx' || ext==='xlsm'){ try{ return {filas: await leerXLSX(await file.arrayBuffer())}; }catch(e){ console.warn(e); } }
+  if (ext==='xlsx' || ext==='xls' || ext==='xlsm' || ext==='ods'){ await cargarLib(LIBS.xlsx); const wb = XLSX.read(await file.arrayBuffer(), {type:'array'}); return {filas: XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]], {header:1, raw:false, defval:''}).filter(r=>r.some(x=>String(x).trim()))}; }
+  if (ext==='docx') return {filas: await leerDOCX(await file.arrayBuffer())};
+  if (ext==='doc') throw new Error('Los archivos .doc (Word viejo) no se pueden leer. Abrilo en Word y elegí "Guardar como" → Documento de Word (.docx).');
+  if (ext==='pdf') return await leerPDFGenerico(file, roles);
+  throw new Error('Formato no reconocido. Usá Excel, CSV, Word (.docx) o PDF.');
+}
+// Escritura de .xlsx sin internet (ZIP sin compresión)
+function crc32(u8){ let crc = 0xFFFFFFFF; for (let i=0;i<u8.length;i++){ let c = (crc ^ u8[i]) & 0xFF; for (let k=0;k<8;k++) c = c & 1 ? (c>>>1) ^ 0xEDB88320 : c>>>1; crc = (crc>>>8) ^ c; } return (crc ^ 0xFFFFFFFF) >>> 0; }
+function zipBlob(files){
+  const enc = new TextEncoder(); const partes = [], central = []; let off = 0;
+  for (const [name, txt] of Object.entries(files)){
+    const nb = enc.encode(name), data = enc.encode(txt), crc = crc32(data);
+    const lh = new DataView(new ArrayBuffer(30)); lh.setUint32(0,0x04034b50,true); lh.setUint16(4,20,true); lh.setUint16(8,0,true); lh.setUint32(14,crc,true); lh.setUint32(18,data.length,true); lh.setUint32(22,data.length,true); lh.setUint16(26,nb.length,true);
+    partes.push(new Uint8Array(lh.buffer), nb, data);
+    const ch = new DataView(new ArrayBuffer(46)); ch.setUint32(0,0x02014b50,true); ch.setUint16(4,20,true); ch.setUint16(6,20,true); ch.setUint32(16,crc,true); ch.setUint32(20,data.length,true); ch.setUint32(24,data.length,true); ch.setUint16(28,nb.length,true); ch.setUint32(42,off,true);
+    central.push(new Uint8Array(ch.buffer), nb); off += 30 + nb.length + data.length;
+  }
+  const csize = central.reduce((n,a)=>n+a.length,0); const e = new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true); e.setUint16(8,Object.keys(files).length,true); e.setUint16(10,Object.keys(files).length,true); e.setUint32(12,csize,true); e.setUint32(16,off,true);
+  return new Blob([...partes, ...central, new Uint8Array(e.buffer)], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+}
+function descargarXLSX(nombre, filas, hoja='Datos', anchos=[]){
+  const x = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const col = i => { let s = ''; i++; while (i){ const m = (i-1)%26; s = String.fromCharCode(65+m) + s; i = Math.floor((i-1)/26); } return s; };
+  const sheet = `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetViews><sheetView workbookViewId="0"><pane ySplit="1" topLeftCell="A2" activePane="bottomLeft" state="frozen"/></sheetView></sheetViews>`
+    + `<cols>${(filas[0]||[]).map((_,i)=>`<col min="${i+1}" max="${i+1}" width="${anchos[i]||16}" customWidth="1"/>`).join('')}</cols><sheetData>`
+    + filas.map((r,ri)=>`<row r="${ri+1}">${r.map((v,ci)=> v===''||v==null ? '' : (typeof v==='number' ? `<c r="${col(ci)}${ri+1}"${ri===0?' s="1"':''}><v>${v}</v></c>` : `<c r="${col(ci)}${ri+1}" t="inlineStr"${ri===0?' s="1"':''}><is><t xml:space="preserve">${x(v)}</t></is></c>`)).join('')}</row>`).join('')
+    + `</sheetData></worksheet>`;
+  const blob = zipBlob({
+    '[Content_Types].xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/><Override PartName="/xl/styles.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.styles+xml"/></Types>',
+    '_rels/.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>',
+    'xl/workbook.xml': `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="${x(hoja).slice(0,31)}" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+    'xl/_rels/workbook.xml.rels': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/><Relationship Id="rId2" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/styles" Target="styles.xml"/></Relationships>',
+    'xl/styles.xml': '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><styleSheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><fonts count="2"><font><sz val="10"/><name val="Arial"/></font><font><b/><sz val="10"/><color rgb="FFFFFFFF"/><name val="Arial"/></font></fonts><fills count="3"><fill><patternFill patternType="none"/></fill><fill><patternFill patternType="gray125"/></fill><fill><patternFill patternType="solid"><fgColor rgb="FF1F1F1F"/></patternFill></fill></fills><borders count="1"><border/></borders><cellStyleXfs count="1"><xf numFmtId="0" fontId="0" fillId="0" borderId="0"/></cellStyleXfs><cellXfs count="2"><xf numFmtId="0" fontId="0" fillId="0" borderId="0" xfId="0"/><xf numFmtId="0" fontId="1" fillId="2" borderId="0" xfId="0" applyFont="1" applyFill="1"/></cellXfs><cellStyles count="1"><cellStyle name="Normal" xfId="0" builtinId="0"/></cellStyles></styleSheet>',
+    'xl/worksheets/sheet1.xml': sheet
+  });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = nombre; a.click(); setTimeout(()=>URL.revokeObjectURL(a.href), 3000);
+}
+
+/* =====================================================
+   20. IMPORTACIÓN EN CADA MÓDULO
+   Mismo circuito que licencias: archivo → columnas → vista previa
+   con colores → confirmar (con historial y deshacer).
+   ===================================================== */
+const parseHora = v => {
+  if (v == null || v === '') return null;
+  if (typeof v === 'number'){ if (v < 1) return excelFecha(v); if (v < 24) return `${String(Math.floor(v)).padStart(2,'0')}:${String(Math.round((v%1)*60)).padStart(2,'0')}`; return null; }
+  const m = String(v).trim().match(/(\d{1,2})(?:\s*[:.h]\s*(\d{2}))?\s*(hs?|horas?)?$/i) || String(v).match(/(\d{1,2}):(\d{2})/);
+  if (!m) return null; const hh = +m[1], mm = +(m[2]||0); if (hh>23 || mm>59) return null;
+  return `${String(hh).padStart(2,'0')}:${String(mm).padStart(2,'0')}`;
+};
+const fechaDe = v => { if (v == null || v === '') return null; if (typeof v === 'number') return parseFecha(v); return parseFecha(String(v).trim().split(/\s+/)[0]); };
+const horaDeFecha = v => { const m = String(v||'').match(/\s(\d{1,2}:\d{2})/); return m ? parseHora(m[1]) : null; };
+const num = v => { if (v === '' || v == null) return null; const x = parseFloat(String(v).replace(',', '.').replace(/[^\d.\-]/g,'')); return isNaN(x) ? null : x; };
+const siNo = v => /^(s|si|sí|x|ok|1|true|presentado|presento|presentó|entregado)/i.test(String(v||'').trim());
+function mapCodigo(v){
+  const t = String(v ?? '').trim(); if (!t) return null;
+  if (/^[-—–_/]+$/.test(t)) return '—';
+  const k = norm(t).replace(/[ .]/g,'').toUpperCase();
+  const c = DB.config.codigos.find(c => c.sigla.replace(/[ .]/g,'').toUpperCase() === k); if (c) return c.sigla;
+  const sin = [[/^PRES/,'P'],[/^PASIV/,'PASIVA'],[/^FRANC|^FC/,'FC'],[/^CARP|^CM/,'CM'],[/^LIC|^LA$|^VAC/,'LA'],[/^CAMB|^CG/,'CG'],[/^ART|^ACCID/,'ART'],[/^CAP|^TALL/,'CAP']];
+  for (const [re, s] of sin) if (re.test(k) && codigo(s)) return s;
+  return undefined; // desconocido
+}
+const tipoCarpeta = v => { const t = norm(v); if (!t) return 'Enfermedad'; if (/art|accid|trabajo/.test(t)) return 'Accidente de trabajo / ART'; if (/famil/.test(t)) return 'Familiar enfermo'; if (/enferm/.test(t)) return 'Enfermedad'; return 'Otro'; };
+const estadoCapDe = v => { const t = norm(v); if (/aprob/.test(t)) return 'aprobado'; if (/ausen|falt|no asist/.test(t)) return 'ausente'; return 'asistio'; };
+
+/* Definición de cada importación: columnas que reconoce (en orden de prioridad), planilla modelo y reglas */
+const IMP = {
+  personal: { titulo:'Personal', persona:'alta',
+    campos:[['nombre','Apellido y nombre',/apellido|nombre|agente|efectivo/],['dni','DNI / Legajo',/dni|legajo|documento/],['guardia','Guardia',/guardia/],['cargo','Cargo / jerarquía',/cargo|jerarq|grado|funcion/],['tel','Teléfono',/tel|celular|movil|contacto/],['ingreso','Fecha de ingreso',/ingreso|alta|antig/]],
+    oblig:['nombre'], modelo:[['APELLIDO Y NOMBRE','DNI','GUARDIA','CARGO','TELÉFONO','FECHA DE INGRESO'],['PEREZ JUAN','30111222','A','Técnico','3541 000000','01/03/2020']], anchos:[30,12,10,18,16,16] },
+  horas: { titulo:'Horas extras',
+    campos:[['nombre','Apellido y nombre',/apellido|nombre|agente|efectivo/],['dni','DNI / Legajo',/dni|legajo|documento/],['nroForm','N.º de formulario',/form|n[°ºo]\b|numero|nro/],['fechaHasta','Fecha de salida',/fecha.*(salida|hasta|fin|egreso|retiro)|(salida|egreso).*fecha/],['hasta','Hora de salida',/hora.*(salida|hasta|fin|egreso|retiro)|^(salida|hasta|egreso|retiro)/],['fecha','Fecha de ingreso',/fecha|^dia$/],['desde','Hora de ingreso',/hora|ingreso|entrada|desde|inicio/],['horas','Cantidad de horas',/cantidad|total|^horas|hs extras|tiempo/],['tipo','Tipo',/tipo/],['motivo','Motivo',/motivo|causa|detalle|observ/],['autorizo','Autorizó',/autoriz|jefe|firma/]],
+    ver:['nombre','dni','fecha','desde','fechaHasta','hasta','horas','tipo','motivo','autorizo','nroForm'], oblig:['nombre','fecha'], modelo:[['APELLIDO Y NOMBRE','DNI','FECHA DE INGRESO','HORA DE INGRESO','FECHA DE SALIDA','HORA DE SALIDA','MOTIVO','AUTORIZÓ','N° FORMULARIO'],['PEREZ JUAN','30111222','04/12/2026','09:00','05/12/2026','21:00','Incendio forestal','Jefe de guardia','1234']], anchos:[28,12,16,14,16,14,24,18,14] },
+  francos: { titulo:'Francos compensatorios',
+    campos:[['nombre','Apellido y nombre',/apellido|nombre|agente|efectivo/],['dni','DNI / Legajo',/dni|legajo|documento/],['fecha','Fecha del franco',/fecha|dia|franco/],['obs','Observaciones',/observ|motivo|detalle/]],
+    oblig:['nombre','fecha'], modelo:[['APELLIDO Y NOMBRE','DNI','FECHA DEL FRANCO','OBSERVACIONES'],['PEREZ JUAN','30111222','09/12/2026','']], anchos:[28,12,18,30] },
+  carpetas: { titulo:'Carpetas médicas',
+    campos:[['nombre','Apellido y nombre',/apellido|nombre|agente|efectivo/],['dni','DNI / Legajo',/dni|legajo|documento/],['nroCert','N.º de certificado',/certif.*(n|num)|n.*certif|nro/],['presento','Presentó certificado',/present|entreg|certif/],['hasta','Hasta',/hasta|fin|alta|reintegro|reincorp/],['desde','Desde',/desde|inicio|fecha/],['dias','Cantidad de días',/dias|cantidad/],['tipo','Tipo',/tipo|motivo/],['obs','Observaciones',/observ|detalle/]],
+    ver:['nombre','dni','desde','hasta','dias','tipo','nroCert','presento','obs'], oblig:['nombre','desde'], modelo:[['APELLIDO Y NOMBRE','DNI','DESDE','HASTA','CANTIDAD DE DÍAS','TIPO','N° CERTIFICADO','PRESENTÓ CERTIFICADO','OBSERVACIONES'],['PEREZ JUAN','30111222','10/12/2026','','3','Enfermedad','5678','Sí','']], anchos:[28,12,14,14,16,26,16,20,26] },
+  capacitaciones: { titulo:'Capacitaciones',
+    campos:[['tema','Capacitación / tema',/capacit|tema|curso|taller/],['nombre','Apellido y nombre',/apellido|nombre|agente|efectivo|asistente/],['dni','DNI / Legajo',/dni|legajo|documento/],['fecha','Fecha',/fecha/],['horas','Horas',/horas|duraci/],['instructor','Instructor / institución',/instruct|docente|institu|dictad/],['lugar','Lugar',/lugar|sede/],['modalidad','Modalidad',/modalid|virtual|presencial/],['estado','Asistencia',/asist|estado|resultado|aprob/]],
+    ver:['nombre','dni','tema','fecha','horas','instructor','lugar','modalidad','estado'], oblig:['tema','fecha','nombre'], modelo:[['CAPACITACIÓN','FECHA','HORAS','INSTRUCTOR / INSTITUCIÓN','LUGAR','MODALIDAD','APELLIDO Y NOMBRE','DNI','ASISTENCIA'],['RCP y primeros auxilios','15/12/2026','4','Cruz Roja','Base ETAC','Presencial','PEREZ JUAN','30111222','Asistió']], anchos:[28,12,8,24,16,14,28,12,12] },
+  asistencia: { titulo:'Asistencia',
+    campos:[['nombre','Apellido y nombre',/apellido|nombre|agente|efectivo/],['dni','DNI / Legajo',/dni|legajo|documento/],['fecha','Fecha',/fecha|dia/],['codigo','Código',/codigo|estado|asistencia|situacion|novedad/],['nota','Nota',/nota|observ/]],
+    oblig:['nombre','fecha','codigo'] }
+};
+function rolesMod(mod){ return t => { const e = norm(String(t??'').replace(/[.°º]/g,'').replace(/\bn\s/i,'nro ')); if (!e) return ''; const c = IMP[mod].campos.find(([,,re]) => re.test(e)); return c ? c[0] : ''; }; }
+
+function abrirImport(mod){
+  const d = IMP[mod]; window._gi = {mod};
+  const extraAs = mod==='asistencia' ? `<div class="row" style="margin-bottom:10px">
+      <div><label>Guardia de la planilla</label><select id="giG">${optG(F.g || UI.asis?.g || 'A')}</select></div>
+      <div><label>Mes</label><select id="giM">${MESES.map((x,i)=>`<option value="${i}" ${i===(UI.asis?.m ?? +hoy().slice(5,7)-1)?'selected':''}>${x}</option>`).join('')}</select></div>
+      <div><label>Año</label><input id="giY" type="number" style="width:96px" value="${UI.asis?.y ?? hoy().slice(0,4)}"></div>
+      <div><label>&nbsp;</label><label><input type="checkbox" id="giSob"> Reemplazar casillas ya cargadas</label></div></div>
+      <p class="muted">Acepta la planilla como la de papel (nombres en filas y días de guardia en columnas: "3 NOV", "03/12", "3"…) o una lista con columnas Persona · Fecha · Código. El mes y el año se usan cuando las columnas dicen solo el día.</p>` : '';
+  const campos = mod==='asistencia' ? '' : `<p class="muted">Columnas que reconoce: ${(d.ver ? d.ver.map(k=>d.campos.find(c=>c[0]===k)) : d.campos).map(([k,t])=>d.oblig.includes(k)?`<b>${t}</b>`:t).join(' · ')} (en negrita, las obligatorias). Si el título es distinto, se puede elegir a mano.</p>`;
+  const ult = DB.importaciones.filter(i=>i.modulo===mod && !i.deshecha).pop();
+  modal(`<h2>Importar archivo – ${d.titulo}</h2>${extraAs}${campos}
+    <div class="row" style="margin-bottom:10px"><button class="btn" onclick="modeloImport('${mod}')">⬇ Descargar planilla modelo</button>${ult?`<button class="btn" onclick="deshacerGen('${mod}')">↶ Deshacer última importación (${h(ult.archivo)})</button>`:''}</div>
+    <div class="dz" id="giDz" onclick="$('#giF').click()"><div style="font-size:36px">📥</div><b>Arrastrá el archivo acá o hacé clic para elegirlo</b><div class="muted">Excel, CSV, Word (.docx) o PDF. Nada se guarda hasta que confirmes.</div><input type="file" id="giF" accept=".xlsx,.xls,.xlsm,.csv,.txt,.docx,.doc,.pdf" style="display:none"></div>
+    <div id="giArea" style="margin-top:12px"></div>
+    <div class="acc"><button class="btn" onclick="cerrarModal()">Cerrar</button></div>`, 'xl');
+  const dz = $('#giDz'), fi = $('#giF');
+  fi.onchange = () => fi.files[0] && giArchivo(fi.files[0]);
+  dz.ondragover = e => { e.preventDefault(); dz.classList.add('on'); }; dz.ondragleave = () => dz.classList.remove('on');
+  dz.ondrop = e => { e.preventDefault(); dz.classList.remove('on'); if (e.dataTransfer.files[0]) giArchivo(e.dataTransfer.files[0]); };
+}
+const giArea = html => { const e = $('#giArea'); if (e) e.innerHTML = html; };
+function modeloImport(mod){
+  if (mod==='asistencia'){
+    const g = val('giG')||'A', m = +val('giM'), y = +val('giY'); const fs = fechasGuardia(g,y,m);
+    const ps = activos().filter(p=>p.guardia===g);
+    descargarXLSX(`planilla_asistencia_${MESES[m]}_${y}_Guardia_${g}.xlsx`, [['APELLIDO Y NOMBRE', ...fs.map(fmt)], ...ps.map(p=>[p.nombre, ...fs.map(()=> '')])], `${MESES[m]} G${g}`, [30, ...fs.map(()=>12)]);
+    return toast('Planilla del mes descargada con el personal y los días de guardia. Completala con los códigos (P, FC, CM…).','ok');
+  }
+  const d = IMP[mod]; descargarXLSX(`planilla_modelo_${mod}.xlsx`, d.modelo, d.titulo, d.anchos);
+}
+async function giArchivo(file){
+  const mod = _gi.mod; _gi.archivo = file.name;
+  try{
+    giArea('<div class="warn">Leyendo archivo…</div>');
+    const {filas, ocr} = await leerArchivoTabla(file, rolesMod(mod)); _gi.ocr = !!ocr;
+    if (!filas.length) throw new Error('El archivo está vacío.');
+    if (mod==='asistencia' && giGrilla(filas)) return;
+    giMapeo(filas);
+  }catch(e){ console.error(e); giArea(`<div class="err">${h(e.message)}</div>`); }
+}
+function giMapeo(filas){
+  const mod = _gi.mod, rol = rolesMod(mod);
+  let hi = filas.slice(0,15).findIndex(r => r.filter(c => rol(c)).length >= 2); if (hi < 0) hi = 0;
+  const enc = filas[hi].map(String); const usados = new Set();
+  const roles = enc.map(e => { const r = rol(e); if (!r || usados.has(r)) return ''; usados.add(r); return r; });
+  Object.assign(_gi, {filas, hi});
+  const ops = [['','(ignorar)'], ...IMP[mod].campos.map(([k,t])=>[k,t])];
+  giArea(`<div class="card"><h3 style="margin-top:0">Columnas encontradas en "${h(_gi.archivo)}"</h3><p class="muted">Revisá qué es cada columna y tocá "Continuar".</p>
+    <div class="tbl-wrap"><table class="tbl"><tr>${enc.map((e,i)=>`<th>${h(e)||'(sin título)'}<br><select id="gim${i}" style="font-size:13px;padding:3px">${ops.map(([k,t])=>`<option value="${k}" ${k===roles[i]?'selected':''}>${t}</option>`).join('')}</select></th>`).join('')}</tr>
+    ${filas.slice(hi+1, hi+4).map(r=>`<tr>${enc.map((_,i)=>`<td>${h(r[i])}</td>`).join('')}</tr>`).join('')}</table></div>
+    <button class="btn p" style="margin-top:10px" onclick="giAplicarMapeo()">Continuar a la vista previa</button></div>`);
+}
+function giAplicarMapeo(){
+  const mod = _gi.mod, d = IMP[mod]; const n = _gi.filas[_gi.hi].length;
+  const roles = Array.from({length:n}, (_,i) => val('gim'+i));
+  const faltan = d.oblig.filter(k => !roles.includes(k));
+  if (faltan.length) return alert('Falta indicar la columna: ' + faltan.map(k=>d.campos.find(c=>c[0]===k)[1]).join(', '));
+  const items = []; let ant = null;
+  for (const r of _gi.filas.slice(_gi.hi+1)){
+    const o = {};
+    roles.forEach((rol,i) => { if (!rol) return; const v = r[i]; if (v === '' || v == null) return; o[rol] = o[rol] != null && typeof o[rol]==='string' ? o[rol] + ' ' + v : v; });
+    if (!Object.keys(o).length) continue;
+    if (o.nombre && rolesMod(mod)(String(o.nombre)) === 'nombre' && Object.keys(o).length <= 2) continue; // encabezado repetido
+    if (!o.nombre && ant && mod!=='personal'){ o.nombre = ant.nombre; if (ant.dni && !o.dni) o.dni = ant.dni; o._heredado = true; }
+    if (mod==='capacitaciones' && ant){ ['tema','fecha','horas','instructor','lugar','modalidad'].forEach(k=>{ if (o[k]==null && ant[k]!=null) o[k] = ant[k]; }); }
+    if (o.nombre) o.nombre = String(o.nombre).replace(/\s+/g,' ').trim();
+    items.push(o); ant = o;
+  }
+  _gi.items = items.map((o,i) => { const it = {v:o, i, guardia: F.g || 'A', ocr:_gi.ocr}; const c = o.nombre ? cruzar({nombre:o.nombre, dni:o.dni?String(o.dni):''}) : {estado:'no', pid:''}; Object.assign(it, c); it.accion = c.estado==='no' ? (mod==='personal'?'nueva':'nueva') : 'importar'; if (mod==='personal' && c.estado==='posible') it.accion = 'importar'; return it; });
+  giPrevia();
+}
+// --- Validación por módulo: completa it.notas, it.col (v/a/r/d) y datos calculados ---
+function giValidar(){
+  const mod = _gi.mod; const saldoUsado = {}; const vistos = new Set();
+  _gi.items.forEach(it => {
+    const v = it.v, n = []; let col = 'v'; it.err = false; it.dup = false;
+    const pid = it.accion==='importar' ? it.pid : '';
+    if (!v.nombre){ n.push('Falta el nombre'); col = 'r'; it.err = true; }
+    if (it.accion==='descartar'){ it.col = 'd'; it.notas = ['Descartada']; return; }
+    if (it.accion==='nueva' && mod!=='personal'){ n.push('No está en el sistema: se va a dar de alta'); col = 'r'; }
+    if (it.estado==='posible' && it.accion==='importar') { n.push('Posible coincidencia: confirmá la persona'); col = 'a'; }
+    if (v._heredado) n.push('Nombre tomado de la fila anterior');
+    if (it.ocr){ n.push('Leído por OCR: revisar'); if (col==='v') col = 'a'; }
+    const mal = t => { n.push(t); col = 'r'; it.err = true; }, rev = t => { n.push(t); if (col==='v') col = 'a'; };
+    if (mod==='personal'){
+      const g = String(v.guardia||'').toUpperCase().replace(/GUARDIA|\s|"/g,'');
+      it.g = GUARDIAS.includes(g) ? g : (it.accion==='nueva' ? it.guardia : persona(pid)?.guardia || it.guardia);
+      if (v.guardia && !GUARDIAS.includes(g)) rev(`Guardia "${v.guardia}" no reconocida`);
+      if (v.ingreso && !fechaDe(v.ingreso)) rev('Fecha de ingreso inválida');
+      if (it.accion==='nueva'){ n.unshift('Persona nueva: se da de alta'); }
+      else if (pid){ const p = persona(pid); const cambios = [];
+        [['dni','DNI'],['cargo','cargo'],['tel','teléfono']].forEach(([k,t])=>{ if (v[k] && String(v[k]).trim() !== p[k]) cambios.push(t); });
+        if (v.ingreso && fechaDe(v.ingreso) !== p.ingreso) cambios.push('fecha de ingreso');
+        if (GUARDIAS.includes(g) && g !== p.guardia){ cambios.push(`guardia ${p.guardia} → ${g}`); if (col==='v') col = 'a'; }
+        n.unshift(cambios.length ? 'Actualiza: ' + cambios.join(', ') : 'Ya existe, sin cambios'); if (!cambios.length) col = 'd';
+      }
+    }
+    if (mod==='horas'){
+      const f = fechaDe(v.fecha); let de = parseHora(v.desde) || horaDeFecha(v.fecha), ha = parseHora(v.hasta) || horaDeFecha(v.fechaHasta);
+      let ff = fechaDe(v.fechaHasta); const hs = num(v.horas);
+      it.calc = null;
+      if (!f) mal('Fecha de ingreso inválida');
+      else if (de && ha){
+        if (!ff) ff = ha <= de ? addD(f,1) : f;
+        const r = calcHoras(pid, f, de, ff, ha);
+        if (!r) mal('La salida es anterior al ingreso');
+        else { it.calc = {fecha:f, fechaHasta:ff, desde:de, hasta:ha, ...r}; n.unshift(`${minHM(r.total)} en total${r.enGuardia?` − ${minHM(r.enGuardia)} de su guardia`:''} = <b>${minHM(r.extra)}</b> extras`); if (r.extra<=0) mal('Todo el horario cae dentro de su guardia'); if (r.extra>1440) rev('Más de 24 h extras seguidas: verificá las fechas'); }
+      } else if (hs != null){ it.calc = {fecha:f, fechaHasta:f, desde:'', hasta:'', total:Math.round(hs*60), enGuardia:0, extra:Math.round(hs*60)}; n.unshift(`<b>${minHM(hs*60)}</b> (cantidad cargada en el archivo)`); }
+      else mal('Faltan la hora de ingreso y de salida (o la cantidad de horas)');
+      if (it.calc && pid){ const k = [pid,it.calc.fecha,it.calc.desde,it.calc.hasta].join('|'); if (vistos.has(k) || DB.horas.some(x=>x.personaId===pid && x.fecha===it.calc.fecha && x.desde===it.calc.desde && x.hasta===it.calc.hasta && !x.anulado) || (v.nroForm && DB.horas.some(x=>x.personaId===pid && x.nroForm && x.nroForm===String(v.nroForm)))){ n.unshift('Ya está cargado'); col='d'; it.dup = true; } vistos.add(k); }
+    }
+    if (mod==='francos'){
+      const f = fechaDe(v.fecha); it.fecha = f;
+      if (!f) mal('Fecha inválida');
+      else if (pid){
+        if (DB.francos.some(x=>x.personaId===pid && x.fecha===f) || vistos.has(pid+f)){ n.unshift('Ya está cargado'); col = 'd'; it.dup = true; }
+        else { saldoUsado[pid] = (saldoUsado[pid]||0) + 1; it.sinSaldo = saldo(pid).disp - saldoUsado[pid] < 0; if (it.sinSaldo) rev('No tiene saldo: se carga como "sin saldo"'); }
+        vistos.add(pid+f);
+      }
+    }
+    if (mod==='carpetas'){
+      const de = fechaDe(v.desde), ha = fechaDe(v.hasta); let dias = num(v.dias);
+      if (!de) mal('Fecha "desde" inválida');
+      else { if (ha) { if (ha < de) mal('"Hasta" es anterior a "desde"'); else { const d2 = diffD(de,ha)+1; if (dias && dias!==d2) rev(`Días (${dias}) no coincide con las fechas (${d2})`); dias = d2; } }
+        if (!dias) mal('Falta "hasta" o la cantidad de días');
+        it.calc = {inicio:de, dias:Math.max(1,Math.round(dias||1)), tipo:tipoCarpeta(v.tipo), presento: v.presento!=null ? siNo(v.presento) : !!v.nroCert, nroCert: v.nroCert!=null?String(v.nroCert):'', obs: v.obs||''};
+        if (dias > umbralLM()) rev(`Más de ${umbralLM()} días: es licencia médica y requiere homologación en Córdoba`);
+        if (pid && DB.carpetas.some(c=>c.personaId===pid && c.inicio===de)){ n.unshift('Ya está cargada'); col = 'd'; it.dup = true; }
+        if (!n.length || n[0].indexOf('Ya')!==0) n.unshift(`${fmt(de)} · ${it.calc.dias} días · ${it.calc.tipo}`);
+      }
+    }
+    if (mod==='capacitaciones'){
+      const f = fechaDe(v.fecha); if (!v.tema) mal('Falta el tema'); if (!f) mal('Fecha inválida');
+      it.calc = {tema:String(v.tema||'').trim(), fecha:f, horas:num(v.horas)||0, estado:estadoCapDe(v.estado)};
+      if (f && v.tema){ const ex = DB.capacitaciones.find(c=>norm(c.tema)===norm(v.tema) && c.fecha===f); if (ex) n.unshift(`Se agrega a "${h(ex.tema)}" del ${fmt(f)} (ya existe)`); else n.unshift(`${h(it.calc.tema)} · ${fmt(f)}`); if (ex && pid && ex.asistentes[pid]===it.calc.estado){ n[0] = 'Ya está cargado'; col = 'd'; it.dup = true; } }
+    }
+    if (mod==='asistencia'){
+      const f = fechaDe(v.fecha); const cod = mapCodigo(v.codigo);
+      if (!f) mal('Fecha inválida'); if (cod===undefined) mal(`Código "${v.codigo}" no reconocido`); if (cod===null) mal('Código vacío');
+      it.celdas = f && cod ? {[f]: cod} : {};
+      if (f && cod) n.unshift(`${fmt(f)}: ${cod}`);
+    }
+    it.notas = n; it.col = col;
+  });
+}
+function giPrevia(){
+  giValidar();
+  const mod = _gi.mod, d = IMP[mod]; let cnt = {v:0,a:0,r:0,d:0};
+  const orden = d.ver ? d.ver.map(k=>d.campos.find(c=>c[0]===k)) : d.campos;
+  const camposVer = orden.filter(([k]) => !['nombre','dni'].includes(k));
+  const filas = _gi.items.map((it, idx) => {
+    cnt[it.col]++;
+    const est = {v:'✅ OK', a:'⚠️ Revisar', r: it.accion==='nueva' && mod!=='personal' ? '➕ Nueva' : '❌ Error', d: it.dup ? '⏭ Ya cargado' : it.accion==='descartar' ? 'Descartada' : 'Sin cambios'}[it.col];
+    const persSel = `<select onchange="giSet(${idx},'sel',this.value)" style="max-width:240px">
+        <option value="__nueva" ${it.accion==='nueva'?'selected':''}>➕ ${mod==='personal'?'Persona nueva':'Dar de alta como nueva'}</option><option value="__desc" ${it.accion==='descartar'?'selected':''}>🗑 Descartar fila</option>
+        ${(it.cands||[]).length?`<optgroup label="Posibles coincidencias">${it.cands.map(id=>`<option value="${id}" ${it.accion==='importar'&&it.pid===id?'selected':''}>${h(nombreP(id))}</option>`).join('')}</optgroup>`:''}
+        <optgroup label="Todo el personal">${DB.personal.slice().sort((x,y)=>x.nombre.localeCompare(y.nombre)).map(p=>`<option value="${p.id}" ${it.accion==='importar'&&it.pid===p.id&&!(it.cands||[]).includes(p.id)?'selected':''}>${h(p.nombre)} (Guardia ${p.guardia})</option>`).join('')}</optgroup></select>
+        ${it.accion==='nueva' && !(mod==='personal' && GUARDIAS.includes(it.g) && it.v.guardia)?`<br><select onchange="giSet(${idx},'guardia',this.value)" style="margin-top:4px">${optG(it.guardia)}</select>`:''}`;
+    return `<tr class="${{v:'prev-ok',a:'prev-a',r:'prev-r',d:'prev-d'}[it.col]}"><td><span class="tag ${it.col==='d'?'':it.col}">${est}</span></td><td><b>${h(it.v.nombre||'—')}</b>${it.v.dni?`<br><small>${h(it.v.dni)}</small>`:''}</td><td>${persSel}</td>
+      ${mod==='asistencia' ? '' : camposVer.map(([k])=>`<td><input style="width:${['motivo','obs','tema','instructor'].includes(k)?150:105}px;padding:4px 6px;font-size:14px" value="${h(it.v[k]??'')}" onchange="giSet(${idx},'${k}',this.value)"></td>`).join('')}
+      <td style="font-size:13px;min-width:220px">${it.notas.join('<br>')}</td></tr>`;
+  }).join('');
+  giArea(`<div class="card"><h3 style="margin-top:0">Vista previa – ${h(_gi.archivo)}</h3>
+    <p><span class="tag v">✅ ${cnt.v} correctas</span> <span class="tag a">⚠️ ${cnt.a} para revisar</span> <span class="tag r">❌/➕ ${cnt.r}</span> <span class="tag">⏭ ${cnt.d} no se cargan</span></p>
+    <p class="muted">Podés corregir cualquier dato o la persona antes de confirmar. Las filas grises (ya cargadas, sin cambios o descartadas) no se importan.</p>
+    <div class="tbl-wrap" style="max-height:58vh"><table class="tbl"><thead><tr><th>Estado</th><th>Leído</th><th>Persona en el sistema</th>${mod==='asistencia'?'':camposVer.map(([,t])=>`<th>${t}</th>`).join('')}<th>Resultado</th></tr></thead><tbody>${filas}</tbody></table></div>
+    <div class="acc"><button class="btn" onclick="giArea('')">Cancelar</button><button class="btn p" onclick="giConfirmar()">Confirmar importación</button></div></div>`);
+}
+function giSet(idx, k, v){
+  const it = _gi.items[idx];
+  if (k==='sel'){ if (v==='__nueva'){ it.accion='nueva'; it.pid=''; } else if (v==='__desc') it.accion='descartar'; else { it.accion='importar'; it.pid=v; it.estado='ok'; } }
+  else if (k==='guardia') it.guardia = v;
+  else it.v[k] = v;
+  giPrevia();
+}
+// --- Grilla de asistencia (como la planilla de papel) ---
+function fechaColumna(t, y, m, permitirDia){
+  if (typeof t === 'number' && t > 20000) return parseFecha(t);
+  const s = String(t||'').trim(); if (!s) return null;
+  let r = parseFecha(s.split(/\s+/)[0]); if (r) return r;
+  let x = s.match(/^(\d{1,2})[\/\-.](\d{1,2})$/); if (x) return parseFecha(`${x[1]}/${x[2]}/${y}`);
+  x = norm(s).match(/^(\d{1,2})\s*(?:de\s*)?([a-z]{3})/); if (x){ const mi = MES_C.findIndex(c=>norm(c)===x[2]); if (mi>=0) return parseFecha(`${x[1]}/${mi+1}/${y}`); }
+  x = s.match(/^(\d{1,2})$/); if (x && permitirDia) return parseFecha(`${x[1]}/${m+1}/${y}`);
+  return null;
+}
+function giGrilla(filas){
+  const y = +val('giY'), m = +val('giM'), g = val('giG');
+  let hi = -1, cols = [];
+  for (let i=0; i<Math.min(15, filas.length); i++){
+    const fs = filas[i].map(c => fechaColumna(c, y, m, true));
+    const n = fs.filter(Boolean).length; if (n >= 2){ hi = i; cols = fs; break; }
+  }
+  if (hi < 0) return false;   // no es grilla: va al mapeo de columnas (formato lista)
+  const enc = filas[hi]; let cn = enc.findIndex(c => /apellido|nombre|agente|efectivo/.test(norm(c)));
+  if (cn < 0){ const letras = enc.map((_,ci)=>filas.slice(hi+1).reduce((s,r)=>s+(String(r[ci]||'').match(/[a-záéíóúñ]/gi)||[]).length,0)); cn = letras.indexOf(Math.max(...letras)); }
+  const fueraMes = cols.filter(f => f && f.slice(0,7) !== `${y}-${String(m+1).padStart(2,'0')}`).length;
+  _gi.items = [];
+  filas.slice(hi+1).forEach((r, i) => {
+    const nombre = String(r[cn]||'').replace(/\s+/g,' ').trim(); if (!nombre || /apellido|nombre|presentes|total/i.test(nombre)) return;
+    const celdas = {}, raros = [];
+    cols.forEach((f, ci) => { if (!f || ci===cn) return; const c = mapCodigo(r[ci]); if (c) celdas[f] = c; else if (c===undefined) raros.push(`${fmt(f).slice(0,5)}: "${r[ci]}"`); });
+    const c = cruzar({nombre, dni:''});
+    _gi.items.push({v:{nombre}, i, ...c, accion: c.estado==='no' ? 'nueva' : 'importar', guardia: g, celdas, raros});
+  });
+  _gi.grilla = {g, fueraMes};
+  giPreviaGrilla(); return true;
+}
+function giPreviaGrilla(){
+  const sob = $('#giSob')?.checked; let cnt = {v:0,a:0,r:0,d:0};
+  _gi.items.forEach(it => {
+    const n = []; let col = 'v'; const pid = it.accion==='importar' ? it.pid : '';
+    if (it.accion==='descartar'){ it.col='d'; it.notas=['Descartada']; return; }
+    if (it.accion==='nueva'){ n.push('No está en el sistema: se va a dar de alta'); col = 'r'; }
+    if (it.estado==='posible' && it.accion==='importar'){ n.push('Posible coincidencia: confirmá la persona'); col = 'a'; }
+    const fs = Object.keys(it.celdas); const ya = pid ? fs.filter(f => DB.asistencia[kAs(pid,f)]?.cod).length : 0;
+    const resumen = {}; fs.forEach(f => resumen[it.celdas[f]] = (resumen[it.celdas[f]]||0) + 1);
+    n.unshift(`${fs.length} casillas: ${Object.entries(resumen).map(([k,v])=>`${k}:${v}`).join(' ') || '—'}`);
+    if (ya) n.push(sob ? `${ya} casillas ya cargadas se reemplazan` : `${ya} casillas ya cargadas se mantienen`);
+    if (it.raros.length){ n.push('Códigos no reconocidos (no se cargan): ' + it.raros.map(h).join(', ')); if (col==='v') col = 'a'; }
+    if (!fs.length){ col = 'd'; }
+    it.notas = n; it.col = col;
+  });
+  _gi.items.forEach(it => cnt[it.col]++);
+  giArea(`<div class="card"><h3 style="margin-top:0">Vista previa – ${h(_gi.archivo)} (Guardia ${_gi.grilla.g})</h3>
+    ${_gi.grilla.fueraMes ? `<div class="warn">${_gi.grilla.fueraMes} columna(s) tienen fechas de otro mes: se cargan en su fecha real.</div>` : ''}
+    <p><span class="tag v">✅ ${cnt.v}</span> <span class="tag a">⚠️ ${cnt.a}</span> <span class="tag r">➕ ${cnt.r} nuevas</span> <span class="tag">⏭ ${cnt.d} sin datos</span></p>
+    <div class="tbl-wrap" style="max-height:58vh"><table class="tbl"><thead><tr><th>Estado</th><th>Leído</th><th>Persona en el sistema</th><th>Resultado</th></tr></thead><tbody>
+    ${_gi.items.map((it,idx)=>`<tr class="${{v:'prev-ok',a:'prev-a',r:'prev-r',d:'prev-d'}[it.col]}"><td><span class="tag ${it.col==='d'?'':it.col}">${{v:'✅ OK',a:'⚠️ Revisar',r:'➕ Nueva',d:'—'}[it.col]}</span></td><td><b>${h(it.v.nombre)}</b></td>
+      <td><select onchange="giSetG(${idx},this.value)" style="max-width:240px"><option value="__nueva" ${it.accion==='nueva'?'selected':''}>➕ Dar de alta como nueva</option><option value="__desc" ${it.accion==='descartar'?'selected':''}>🗑 Descartar fila</option>
+      ${DB.personal.slice().sort((x,y)=>x.nombre.localeCompare(y.nombre)).map(p=>`<option value="${p.id}" ${it.accion==='importar'&&it.pid===p.id?'selected':''}>${h(p.nombre)} (Guardia ${p.guardia})</option>`).join('')}</select></td><td style="font-size:13px">${it.notas.join('<br>')}</td></tr>`).join('')}</tbody></table></div>
+    <div class="acc"><button class="btn" onclick="giArea('')">Cancelar</button><button class="btn p" onclick="giConfirmar()">Confirmar importación</button></div></div>`);
+}
+function giSetG(idx, v){ const it = _gi.items[idx]; if (v==='__nueva'){ it.accion='nueva'; it.pid=''; } else if (v==='__desc') it.accion='descartar'; else { it.accion='importar'; it.pid=v; it.estado='ok'; } giPreviaGrilla(); }
+// --- Guardar lo importado ---
+function giConfirmar(){
+  const mod = _gi.mod; const reg = {id:uid(), fecha:new Date().toISOString(), modulo:mod, archivo:_gi.archivo, cantidad:0, creados:[], actualizados:[], personas:[], asis:[]};
+  const sob = $('#giSob')?.checked;
+  const crear = (col, obj) => { obj.id = obj.id || uid(); obj.importId = reg.id; DB[col].push(obj); reg.creados.push({col, id:obj.id}); return obj; };
+  const personaDe = it => {
+    if (it.accion==='importar' && it.pid) return persona(it.pid);
+    if (it.accion!=='nueva' || !it.v.nombre) return null;
+    const ex = DB.personal.find(p=>claveNombre(p.nombre)===claveNombre(it.v.nombre)); if (ex) return ex;
+    const g = mod==='personal' && it.g ? it.g : it.guardia;
+    const p = nuevaPersona({nombre:it.v.nombre, guardia:g, dni:it.v.dni?String(it.v.dni):''}); DB.personal.push(p); reg.personas.push(p.id); return p;
+  };
+  let ok = 0, salt = 0;
+  _gi.items.forEach(it => {
+    if (it.accion==='descartar' || it.dup || it.err || it.col==='d'){ salt++; return; }
+    const p = personaDe(it); if (!p){ salt++; return; }
+    const v = it.v;
+    if (mod==='personal'){
+      if (reg.personas.includes(p.id)){ Object.assign(p, {cargo:v.cargo?String(v.cargo).trim():'', tel:v.tel?String(v.tel).trim():'', ingreso:fechaDe(v.ingreso)||''}); }
+      else { reg.actualizados.push({col:'personal', id:p.id, prev:JSON.parse(JSON.stringify(p))});
+        if (v.dni) p.dni = String(v.dni).trim(); if (v.cargo) p.cargo = String(v.cargo).trim(); if (v.tel) p.tel = String(v.tel).trim(); if (fechaDe(v.ingreso)) p.ingreso = fechaDe(v.ingreso);
+        if (GUARDIAS.includes(it.g) && it.g !== p.guardia){ p.historialGuardia = p.historialGuardia || [{guardia:p.guardia, desde:'2000-01-01'}]; p.historialGuardia.push({guardia:it.g, desde:hoy()}); p.guardia = it.g; } }
+    }
+    if (mod==='horas' && it.calc){ const c = it.calc; crear('horas', {personaId:p.id, fecha:c.fecha, fechaHasta:c.fechaHasta, tipo: /ingres|anticip/i.test(v.tipo||'')?'ingreso':/otro/i.test(v.tipo||'')?'otro':'retiro', desde:c.desde, hasta:c.hasta, min:c.extra, totalMin:c.total, guardiaMin:c.enGuardia, motivo:String(v.motivo||'').trim(), autorizo:String(v.autorizo||'').trim(), nroForm:v.nroForm!=null?String(v.nroForm):'', anulado:false}); }
+    if (mod==='francos' && it.fecha){ const k = kAs(p.id, it.fecha); const enPl = guardiaEn(p,it.fecha)===guardiaDelDia(it.fecha) && !DB.asistencia[k];
+      crear('francos', {personaId:p.id, fecha:it.fecha, obs:String(v.obs||'Importado'), forzado:!!it.sinSaldo, justif: it.sinSaldo?'Importado de planilla sin saldo':'', origen: enPl ? k : undefined});
+      if (enPl){ reg.asis.push({k, prev:null}); DB.asistencia[k] = {cod:'FC', nota:''}; } }
+    if (mod==='carpetas' && it.calc){ const c = crear('carpetas', {personaId:p.id, ...it.calc}); if (c.dias > umbralLM()) c.homo = 'Pendiente'; }
+    if (mod==='capacitaciones' && it.calc){ const c0 = it.calc;
+      let cap = DB.capacitaciones.find(c=>norm(c.tema)===norm(c0.tema) && c.fecha===c0.fecha);
+      if (!cap) cap = crear('capacitaciones', {tema:c0.tema, fecha:c0.fecha, horas:c0.horas, instructor:String(v.instructor||''), lugar:String(v.lugar||''), modalidad:/virt/i.test(v.modalidad||'')?'Virtual':'Presencial', certificado:false, obligatoria:false, asistentes:{}});
+      else if (!reg.actualizados.some(u=>u.id===cap.id) && !reg.creados.some(u=>u.id===cap.id)) reg.actualizados.push({col:'capacitaciones', id:cap.id, prev:JSON.parse(JSON.stringify(cap))});
+      if (p) cap.asistentes[p.id] = c0.estado; }
+    if (mod==='asistencia'){
+      Object.entries(it.celdas||{}).forEach(([f, cod]) => {
+        const k = kAs(p.id, f); const prev = DB.asistencia[k];
+        if (prev?.cod && !sob) return;
+        reg.asis.push({k, prev: prev ? {...prev} : null});
+        if (prev?.cod==='FC' && cod!=='FC'){ const fr = DB.francos.find(x=>x.origen===k); if (fr){ reg.actualizados.push({col:'francos', id:fr.id, prev:{...fr}, borrado:true}); DB.francos = DB.francos.filter(x=>x!==fr); } }
+        DB.asistencia[k] = {cod, nota:'', importId:reg.id};
+        if (cod==='FC' && prev?.cod!=='FC'){ const s = saldo(p.id); crear('francos', {personaId:p.id, fecha:f, obs:'Importado de la planilla de asistencia', forzado: s.disp<1, justif: s.disp<1?'Importado de planilla sin saldo':'', origen:k}); }
+      });
+    }
+    ok++;
+  });
+  reg.cantidad = ok;
+  DB.importaciones.push(reg); save(); cerrarModal(); render();
+  toast(`Importación terminada: ${ok} fila(s) cargadas${salt?`, ${salt} no se cargaron`:''}${reg.personas.length?`, ${reg.personas.length} persona(s) nuevas`:''}.`, 'ok');
+}
+async function deshacerGen(mod){
+  const r = DB.importaciones.filter(i=>i.modulo===mod && !i.deshecha).pop(); if (!r) return;
+  if (!(await confirmar(`¿Deshacer la importación de "${r.archivo}" del ${new Date(r.fecha).toLocaleString('es-AR')}?`))) return;
+  r.creados.forEach(({col,id}) => DB[col] = DB[col].filter(x=>x.id!==id));
+  r.actualizados.forEach(u => { if (u.borrado){ DB[u.col].push(u.prev); return; } const i = DB[u.col].findIndex(x=>x.id===u.id); if (i>=0) DB[u.col][i] = u.prev; });
+  r.asis.slice().reverse().forEach(({k,prev}) => { if (prev) DB.asistencia[k] = prev; else delete DB.asistencia[k]; });
+  DB.personal = DB.personal.filter(p => !r.personas.includes(p.id));
+  r.deshecha = true; save(); cerrarModal(); render(); toast('Importación deshecha','ok');
+}
+const btnImport = mod => `<button class="btn" onclick="abrirImport('${mod}')">📥 Importar archivo</button>`;
 
 /* =====================================================
    18. ARRANQUE

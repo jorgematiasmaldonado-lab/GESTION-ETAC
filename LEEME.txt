@@ -27,6 +27,18 @@ NOVEDADES DE LA VERSIÓN 2
   Se ve la vista previa en pantalla; "Generar PDF" abre la impresión: elegí
   "Guardar como PDF".
 
+NOVEDADES DE LA VERSIÓN 3
+- Importar archivo en Personal, Asistencia, Horas extras, Francos, Carpetas médicas y
+  Capacitaciones (Excel, CSV, Word .docx o PDF), con vista previa, historial y "Deshacer".
+  Cada módulo tiene su "Planilla modelo"; en Asistencia descarga la planilla del mes
+  con el personal y los días de guardia ya cargados.
+- Horas extras de varios días: fecha y hora de ingreso y de salida. Se descuentan solas
+  las horas que caen dentro de la propia guardia (08:00 a 08:00).
+- Calendario de licencias: los días de guardia se marcan en celeste con una "G".
+- Carpetas médicas: si suman más de 10 días seguidos pasan a ser licencia médica y se
+  sigue la homologación en Córdoba (Pendiente / Turno asignado / Homologada).
+- Se agregó el feriado del 21/06/2027 (Güemes, trasladado al lunes).
+
 COPIAS DE SEGURIDAD
 - Configuración > "Exportar copia de seguridad" descarga un archivo .json con todo.
 - Guardalo en un pendrive o en Drive al menos una vez por semana.
